@@ -1,9 +1,9 @@
-FROM node:22-alpine AS deps
+FROM node:25-alpine AS deps
 WORKDIR /app
 COPY package.json ./
 RUN npm install --no-audit --no-fund
 
-FROM node:22-alpine AS builder
+FROM node:25-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -20,7 +20,7 @@ ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL NEXT_PUBLIC_OIDC_AUTHORIT
 RUN case "$NEXT_PUBLIC_LOGO_DEV_TOKEN" in sk_*) echo "Refusing to build: NEXT_PUBLIC_LOGO_DEV_TOKEN is a secret key" >&2; exit 1;; esac
 RUN npm run build
 
-FROM node:22-alpine
+FROM node:25-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
