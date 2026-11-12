@@ -3,7 +3,7 @@
 import { AccountBalance } from "@/components/banking/account-balance";
 import { Wallet } from "lucide-react";
 import { RevealGroup, RevealItem } from "@/components/animations/reveal";
-import { AccountCard } from "@/components/banking/account-card";
+import { AccountCardPicker } from "@/components/banking/account-card-picker";
 import { EmptyState } from "@/components/banking/empty-state";
 import { ErrorState } from "@/components/banking/error-state";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,9 +20,7 @@ export default function AccountsPage() {
   const holder = dash?.customerName ?? "Account holder";
   return (
     <RevealGroup className="space-y-5">
-      <RevealItem className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {accounts.map((a, i) => <AccountCard key={a.id} account={a} holder={holder} variant={i % 2 ? "teal" : "navy"} type={a.displayName} showBalance={false} />)}
-      </RevealItem>
+      <RevealItem><AccountCardPicker accounts={accounts} holder={holder} /></RevealItem>
       <RevealItem>
         <Card>
           <CardHeader><div><CardTitle>Account details</CardTitle><CardDescription>Balances are summed from immutable ledger entries</CardDescription></div></CardHeader>
