@@ -108,22 +108,9 @@ All built on Radix/shadcn-style primitives in `frontend/components/ui`.
 * **Visa branding is conditional.** `NEXT_PUBLIC_VISA_BRANDING_APPROVED=true` *and* official assets in `public/brand/` are required; otherwise a neutral chip is shown. Do not imply a real card programme, network affiliation or issuing without authorisation. Sandbox cards never display a card number or CVV and are labelled as sandbox.
 * Decorative artwork on public pages uses fictional masked numbers and no real data.
 
-### 7.1 Designer card collection
+### 7.1 Designer card collection (removed)
 
-`DesignerCard` (`frontend/components/banking/designer-card.tsx`) is a decorative, non-interactive card face shown in the **Card designs** section of the Cards page (`CardDesignGallery`). Details are fictional (masked number, `A. MORGAN`, GBP); there is no balance and no real card number.
-
-| Design | Surface | Artwork |
-| --- | --- | --- |
-| **Everyday** | Matte black (`card-matte`) | Fine graphite grid |
-| **Savings** | Pearl white (`card-pearl`) | Silver concentric rings |
-| **Metal** | Brushed titanium (`card-titanium`) with a bevelled edge | Diagonal engraved lines |
-| **Signature** | Smoked glass (`card-smoke`) | One silver sweep |
-
-* All designs are strictly monochrome, share the FINIX mark and wordmark, a silver EMV chip, a contactless symbol and the 1.586 : 1 card proportion.
-* **Payment-network mark:** the Visa logo is shown only when `NEXT_PUBLIC_VISA_BRANDING_APPROVED=true` (same gate as `AccountCard` and the sandbox card faces; Docker builds read `VISA_BRANDING_APPROVED`). The official SVGs go in `public/brand/`; until they exist the component falls back to a third-party (Logo.dev) rendering of visa.com, which is **not** Visa-supplied artwork. With the flag off, a neutral "Demo card" pill is shown. The mark is for design demonstration; real use needs authorisation from Visa or an issuer.
-* Motion: 450 ms entrance, subtle pointer tilt (max ±5°, mouse only). Tilt and entrance are disabled for `prefers-reduced-motion`.
-* Accessibility: each card is a labelled group (`Everyday card design, GBP, number ending 4821`) and is not focusable.
-* Tests: `frontend/tests/designer-cards.spec.ts`.
+The decorative "Card designs" gallery (Everyday, Savings, Metal, Signature) was removed from the Cards page; the page shows only the real Black and Silver cards in the carousel.
 
 ## 8. Merchant logos
 
