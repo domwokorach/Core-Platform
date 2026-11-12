@@ -23,6 +23,7 @@ server:
 app:
   allowed-origin: ${APP_ALLOWED_ORIGIN}
   required-client-id: ${OIDC_CLIENT_ID}
+  jwk-set-uri: ${OIDC_JWKS_URI:}
   audience: ${OIDC_AUDIENCE}
   expose-prometheus: false
   expose-api-docs: false

@@ -115,6 +115,8 @@ test("session survives in-app navigation and reload with no further sign-in prom
 
   await signInTo(page, "/cards");
   await authenticated(page, "/cards");
+  // Let the first data requests complete: navigating away immediately can abort them before any response is recorded.
+  await expect.poll(() => apiStatuses.length, { timeout: 20_000 }).toBeGreaterThan(0);
   const afterLogin = authHops.length; // the one that showed the form
 
   await page.goto(`${APP}/accounts`);

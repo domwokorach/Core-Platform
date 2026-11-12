@@ -1,0 +1,15 @@
+# Gitleaks configuration. Default rules stay enabled; only the reviewed false positives below are allow-listed.
+title = "FINIX gitleaks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Reviewed false positives (no real secrets)"
+regexTarget = "match"
+regexes = [
+  # Server-only SHA-256 digest of the fictional development demo account (frontend/lib/server/demo-auth.ts). Dev-only, fixtures-only.
+  '''PASSWORD_SHA256 = "[0-9a-f]{64}"''',
+  # A literal Idempotency-Key header value used in a test request, not a credential.
+  '''Idempotency-Key", "[A-Za-z0-9_-]{8,100}"''',
+]

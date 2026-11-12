@@ -23,9 +23,12 @@ export default defineConfig({
     { name: "auth-mobile", testMatch: "auth.spec.ts", use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, baseURL: "http://localhost:3000" } },
   ],
   webServer: [
-    { command: "npm run dev -- --port 3000 --hostname 0.0.0.0", url: "http://localhost:3000/login?error=callback", env: { NEXT_PUBLIC_LOGO_DEV_TOKEN: logoToken }, reuseExistingServer: !process.env.CI, timeout: 90_000 },
+    { command: "npm run dev -- --port 3000 --hostname 0.0.0.0", url: "http://127.0.0.1:3000/login?error=callback" /* IPv4 on purpose: Docker publishes on 127.0.0.1, `localhost` may resolve to ::1 and trigger a second, shadowing dev server */, env: { NEXT_PUBLIC_LOGO_DEV_TOKEN: logoToken }, reuseExistingServer: !process.env.CI, timeout: 90_000 },
     { command: "npm run dev -- --port 3100 --hostname 127.0.0.1", url: "http://127.0.0.1:3100/login?error=callback", env: { NEXT_PUBLIC_LOGO_DEV_TOKEN: logoToken, NEXT_PUBLIC_DEMO_MODE: "true", NEXT_DIST_DIR: ".next-demo", NEXT_PUBLIC_APP_ORIGIN: "http://127.0.0.1:3100" }, reuseExistingServer: !process.env.CI, timeout: 90_000 },
     // Development demo sign-in: needs the server-side opt-in, which a production build can never honour.
-    { command: "npm run dev -- --port 3200 --hostname 0.0.0.0", url: "http://localhost:3200/login?error=callback", env: { FINIX_DEMO_AUTH: "true", NEXT_DIST_DIR: ".next-demoauth", NEXT_PUBLIC_APP_ORIGIN: "http://localhost:3200", NEXT_PUBLIC_LOGO_DEV_TOKEN: logoToken }, reuseExistingServer: !process.env.CI, timeout: 90_000 },
+    // CI runs the sample-data UI suite only, so it sets PW_SKIP_DEMOAUTH=1 to avoid starting this extra server.
+    ...(process.env.PW_SKIP_DEMOAUTH ? [] : [
+    { command: "npm run dev -- --port 3200 --hostname 0.0.0.0", url: "http://127.0.0.1:3200/login?error=callback", env: { FINIX_DEMO_AUTH: "true", NEXT_DIST_DIR: ".next-demoauth", NEXT_PUBLIC_APP_ORIGIN: "http://localhost:3200", NEXT_PUBLIC_LOGO_DEV_TOKEN: logoToken }, reuseExistingServer: !process.env.CI, timeout: 90_000 },
+    ]),
   ],
 });

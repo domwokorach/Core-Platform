@@ -3,9 +3,21 @@
 **/target/
 **/.env.local
 **/.env
+**/.env.*.local
+**/.env.bak
+**/*.pem
 **/.terraform/
 **/*.tfstate*
 **/coverage/
 .DS_Store
 .idea/
 .vscode/
+.next-demo/
+.next-demoauth/
+
+# Test and build artefacts (regenerated on every run; never commit)
+**/test-results/
+**/playwright-report/
+**/blob-report/
+**/*.tsbuildinfo
+**/.next-*/

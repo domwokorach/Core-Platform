@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { AuthError, type AuthErrorKey, AUTH_ERRORS } from "@/components/auth/auth-error";
 import { LogoMark } from "@/components/layout/logo";
 import { DemoSignInForm, DevDemoBadge } from "@/components/auth/demo-sign-in-form";
+import { DevelopmentAccount, type DevAccount } from "@/components/auth/development-account";
 import { useAuth } from "@/providers/auth-provider";
 import { getRegistrationManager, getUserManager } from "@/lib/auth";
 import { safeRedirectPath } from "@/lib/auth-redirect";
@@ -20,7 +21,7 @@ const ease = [0.22, 1, 0.36, 1] as const;
  * which renders the one (FINIX-themed) credential screen. Auto-start is skipped when we arrive with an
  * error or after sign-out, so a failing sign-in can never bounce between the two sites.
  */
-export function LoginForm({ returnTo, initialError, signedOut, loginHint, register, demoEnabled }: { returnTo?: string; initialError?: string; signedOut?: boolean; loginHint?: string; register?: boolean; demoEnabled?: boolean }) {
+export function LoginForm({ returnTo, initialError, signedOut, loginHint, register, demoEnabled, devAccount }: { returnTo?: string; initialError?: string; signedOut?: boolean; loginHint?: string; register?: boolean; demoEnabled?: boolean; devAccount?: DevAccount | null }) {
   const router = useRouter();
   const reduce = useReducedMotion();
   const { user, demo, loading } = useAuth();
@@ -32,6 +33,7 @@ export function LoginForm({ returnTo, initialError, signedOut, loginHint, regist
   const destination = safeRedirectPath(returnTo ?? stored);
   const [error, setError] = useState<AuthErrorKey | null>(initialError && initialError in AUTH_ERRORS ? (initialError as AuthErrorKey) : null);
   const [redirecting, setRedirecting] = useState(false);
+  const [prefill, setPrefill] = useState<{ email: string; password: string; n: number }>();
   const started = useRef(false);
   const noun = register ? "Create your FINIX account" : "Sign in to your account";
   const manual = Boolean(error) || Boolean(signedOut) || demoMode;
@@ -99,7 +101,8 @@ export function LoginForm({ returnTo, initialError, signedOut, loginHint, regist
             {demoMode ? (
               <>
                 <DevDemoBadge />
-                <DemoSignInForm onSuccess={() => { started.current = true; setRedirecting(true); window.location.assign(returnTo ? destination : "/dashboard"); }} />
+                {devAccount && <DevelopmentAccount account={devAccount} onUse={a => setPrefill(p => ({ email: a.username, password: a.password, n: (p?.n ?? 0) + 1 }))} />}
+                <DemoSignInForm prefill={prefill} onSuccess={() => { started.current = true; setRedirecting(true); window.location.assign(returnTo ? destination : "/dashboard"); }} />
                 <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground" aria-hidden><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>
                 <Button type="button" variant="outline" size="lg" disabled={redirecting} onClick={() => void start()} className="h-[52px] w-full rounded-xl text-base">
                   {redirecting ? <><Loader2 className="animate-spin" aria-hidden />Redirecting…</> : "Continue with secure sign-in"}

@@ -2,15 +2,17 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: finix
-      POSTGRES_USER: finix
-      POSTGRES_PASSWORD: finix_dev_only
+      # Values come from the git-ignored root .env: run `bash scripts/setup-env.sh` first.
+      # An existing data volume keeps the password it was created with (see README: rotating secrets).
+      POSTGRES_DB: ${POSTGRES_DB:-finix}
+      POSTGRES_USER: ${POSTGRES_USER:-finix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run 'bash scripts/setup-env.sh' to generate .env}
     ports:
       - "127.0.0.1:5433:5432"
     volumes:
       - finix_pg:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U finix -d finix"]
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 3s
       timeout: 3s
       retries: 20
@@ -18,13 +20,28 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.0
     command: start-dev --import-realm
+    depends_on: [mailpit]
     environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: dev_admin_only
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:?run 'bash scripts/setup-env.sh' to generate .env}
+      # One public issuer (http://localhost:8081/realms/finix) for browser and API; containers reach Keycloak at keycloak:8080.
+      KC_HOSTNAME: http://localhost:8081
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
     ports:
       - "127.0.0.1:8081:8080"
     volumes:
       - ./infra/keycloak/finix-realm.json:/opt/keycloak/data/import/finix-realm.json:ro
+      - ./infra/keycloak/themes/finix:/opt/keycloak/themes/finix:ro
+      # Development-only child theme (adds the "Development Account" helper card). Do not mount it anywhere but local dev.
+      - ./infra/keycloak/themes/finix-dev:/opt/keycloak/themes/finix-dev:ro
+      # Keycloak's dev database (H2). Without this, every container recreate wipes accounts created through registration.
+      - finix_kc:/opt/keycloak/data/h2
+
+  # Development mail catcher: Keycloak's verification / password-reset emails land here instead of leaving the machine.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports:
+      - "127.0.0.1:8025:8025"   # web UI + API (SMTP 1025 is internal to the compose network)
 
   prometheus:
     image: prom/prometheus:v2.55.1
@@ -47,3 +64,4 @@ services:
 
 volumes:
   finix_pg:
+  finix_kc:

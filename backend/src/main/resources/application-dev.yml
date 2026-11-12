@@ -1,9 +1,9 @@
-# Explicit local development profile. Never use these credentials in a real environment.
+# Explicit local development profile (demo data). Credentials come from the environment, never from this file.
 spring:
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/finix}
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/finix}
     username: ${DB_USER:finix}
-    password: ${DB_PASSWORD:finix_dev_only}
+    password: ${DB_PASSWORD:${POSTGRES_PASSWORD}}   # no default: run scripts/setup-env.sh, then `set -a; . ../.env; set +a`
   flyway:
     locations: classpath:db/migration,classpath:db/demo
   security:
@@ -14,6 +14,7 @@ spring:
 app:
   allowed-origin: ${APP_ALLOWED_ORIGIN:http://localhost:3000}
   required-client-id: ${OIDC_CLIENT_ID:finix-web}
+  jwk-set-uri: ${OIDC_JWKS_URI:}
   audience: ${OIDC_AUDIENCE:finix-api}
   expose-prometheus: true
   expose-api-docs: true

@@ -1,14 +1,37 @@
+<div align="center">
+
 # FINIX — Core Banking Platform
 
-### Sign In — premium split-screen authentication
+**A modern core banking development sandbox: double-entry GBP ledger, Keycloak authentication, sandbox cards and a premium Next.js dashboard.**
 
-The FINIX sign-in experience features a black brand hero, fictional card artwork and a clean authentication form.
+[![CI](https://github.com/domwokorach/Core-Platform/actions/workflows/ci.yml/badge.svg)](https://github.com/domwokorach/Core-Platform/actions/workflows/ci.yml)
+![Status: development sandbox](https://img.shields.io/badge/status-development_sandbox-orange)
+![Licence: selection pending](https://img.shields.io/badge/licence-selection_pending-lightgrey)
+
+![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
+![TypeScript 5.9](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
+![Spring Boot 3.5](https://img.shields.io/badge/Spring_Boot-3.5-6DB33F?logo=springboot&logoColor=white)
+![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![Keycloak 26](https://img.shields.io/badge/Keycloak-26-4D4D4D?logo=keycloak&logoColor=white)
+![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+
+</div>
+
+> **FINIX is not a licensed bank and is not a production-ready financial service.** All customers, balances, cards and transactions are fictional. No real payments, card issuing, KYC/AML or regulated activity are implemented. The CI badge reflects the real workflow in [`.github/workflows/ci.yml`](.github/workflows/ci.yml); it can only turn green once GitHub Actions is able to run for this account.
+
+## Screenshots
+
+> Screenshots show local development features with fictional data. Card authorisations are simulated. No real financial transactions, credentials or customer details are represented.
+
+### Dashboard
+
+![FINIX dashboard with accounts, balances and recent transactions](docs/images/finix-dashboard.png)
+
+### Sign in — premium split-screen authentication
+
+The FINIX sign-in experience features a black brand hero, fictional card artwork and a clean authentication form, hosted by Keycloak.
 
 ![FINIX split-screen sign-in page](docs/images/finix-sign-in.png)
-
-> Screenshots show local development/demo features. Card authorisations are simulated. No real financial transactions are represented.
-
-## FINIX Screenshots
 
 ### Cards — spending limits and activity
 
@@ -16,14 +39,22 @@ The Cards page includes sandbox card controls, daily and monthly spending limits
 
 ![FINIX Cards dashboard showing spending limits and card activity](docs/images/finix-cards.png)
 
-> **Purpose:** project overview, installation, architecture, API reference, testing and troubleshooting for developers.
-> **Related documents:** [Development Rules](RULE.md) · [Design System](DESIGN.md) · [Risk Register](RISK.md) · [Licensing](LICENSE.md) · [Copyright](COPYRIGHT.md) · [Security Policy](SECURITY.md)
+## Highlights
 
-FINIX is a **modular-monolith banking development sandbox**: customer accounts, Keycloak authentication, ledger-backed balances, internal GBP transfers, transaction history, sandbox virtual cards and real-time dashboard updates, with an optional market-data and paper-trading integration.
+* **Ledger-backed banking:** balances derived from immutable, balanced double-entry journals in PostgreSQL; GBP only, integer pence.
+* **Safe internal transfers:** one database transaction, customer-level locking, mandatory idempotency keys, audit events.
+* **Keycloak SSO:** OIDC Authorization Code + PKCE, FINIX-themed sign-in and registration with e-mail verification, JWT validation in Spring Security.
+* **Sandbox cards:** freeze, limits and simulated authorisations (no card numbers, no ledger postings).
+* **Real-time updates:** post-commit Server-Sent Events.
+* **Developer experience:** one-command Docker stack, generated local secrets, OpenAPI, Playwright and Testcontainers test suites.
 
-> **FINIX is not a licensed bank and is not a production-ready financial service.** All balances, customers, cards and transactions in the development environment are fictional. No real payments, payment-card issuing, external bank rails, KYC/AML or regulated activity are implemented. See [Project limitations](#project-limitations) and [RISK.md](RISK.md).
+## Documentation
 
-`preview.html` is a standalone visual mock-up (no dependencies; sample data, never calls the API).
+[Development Rules](RULE.md) · [Design System](DESIGN.md) · [Risk Register](RISK.md) · [Security Policy](SECURITY.md) · [Licensing](LICENSE.md) · [Copyright](COPYRIGHT.md) · [Contributing](CONTRIBUTING.md) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md)
+
+## About this project
+
+FINIX is a **modular-monolith banking development sandbox**: customer accounts, Keycloak authentication, ledger-backed balances, internal GBP transfers, transaction history, sandbox virtual cards and real-time dashboard updates, with an optional market-data and paper-trading integration. `preview.html` is a standalone visual mock-up (no dependencies; sample data, never calls the API).
 
 ## Contents
 

@@ -39,11 +39,16 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  */
 @Component
 public class DashboardEventBroker {
+    public static final String DASHBOARD = "dashboard";
+    public static final String CARDS = "cards";
     private static final Logger log = LoggerFactory.getLogger(DashboardEventBroker.class);
 
     private record Subscription(SseEmitter emitter, Instant expiresAt) {}
 
-    private final Map<UUID, List<Subscription>> subscriptions = new ConcurrentHashMap<>();
+    /** One stream per (channel, customer). Channels: "dashboard" and "cards". */
+    private record Key(String channel, UUID customerId) {}
+
+    private final Map<Key, List<Subscription>> subscriptions = new ConcurrentHashMap<>();
     private final AtomicInteger total = new AtomicInteger();
     private final ExecutorService sender = Executors.newFixedThreadPool(2, runnable -> {
         Thread thread = new Thread(runnable, "sse-sender");
@@ -69,19 +74,22 @@ public class DashboardEventBroker {
     }
 
     /** Opens a stream that is closed no later than {@code tokenExpiry}. Sends {@code stream.ready} immediately. */
-    public SseEmitter subscribe(UUID customerId, Instant tokenExpiry) {
+    public SseEmitter subscribe(UUID customerId, Instant tokenExpiry) { return subscribe(DASHBOARD, customerId, tokenExpiry); }
+
+    public SseEmitter subscribe(String channel, UUID customerId, Instant tokenExpiry) {
+        Key key = new Key(channel, customerId);
         long remainingMs = Duration.between(Instant.now(), tokenExpiry).toMillis();
         if (remainingMs <= 0) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access token expired");
         SseEmitter emitter = new SseEmitter(remainingMs);
         Subscription subscription = new Subscription(emitter, tokenExpiry);
         synchronized (this) {
-            List<Subscription> mine = subscriptions.computeIfAbsent(customerId, id -> new CopyOnWriteArrayList<>());
+            List<Subscription> mine = subscriptions.computeIfAbsent(key, k -> new CopyOnWriteArrayList<>());
             if (total.get() >= maxTotal || mine.size() >= maxPerCustomer)
                 throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Too many live connections");
             mine.add(subscription);
             total.incrementAndGet();
         }
-        Runnable cleanup = () -> remove(customerId, subscription);
+        Runnable cleanup = () -> remove(key, subscription);
         emitter.onCompletion(cleanup);
         emitter.onTimeout(emitter::complete);
         emitter.onError(error -> cleanup.run());
@@ -89,7 +97,7 @@ public class DashboardEventBroker {
             emitter.send(SseEmitter.event().name("stream.ready").data(
                 Map.of("heartbeatSeconds", heartbeatSeconds, "expiresAt", tokenExpiry.toString()), MediaType.APPLICATION_JSON));
         } catch (IOException | IllegalStateException e) {
-            remove(customerId, subscription);
+            remove(key, subscription);
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Could not open stream");
         }
         return emitter;
@@ -98,19 +106,29 @@ public class DashboardEventBroker {
     /** Runs only after the publishing transaction commits; rolled-back work never notifies. */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onDashboardChanged(DashboardChanged changed) {
-        List<Subscription> targets = subscriptions.get(changed.customerId());
+        publish(new Key(DASHBOARD, changed.customerId()), "dashboard.updated",
+            Map.of("eventId", UUID.randomUUID().toString(), "reason", changed.reason(), "occurredAt", Instant.now().toString()));
+    }
+
+    /** Card lifecycle notifications. Identifiers only: never card details, limits or amounts. */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onCardChanged(CardChanged changed) {
+        publish(new Key(CARDS, changed.customerId()), changed.type(),
+            Map.of("eventId", UUID.randomUUID().toString(), "cardId", changed.cardId().toString(), "occurredAt", Instant.now().toString()));
+    }
+
+    private void publish(Key key, String eventName, Map<String, String> data) {
+        List<Subscription> targets = subscriptions.get(key);
         if (targets == null || targets.isEmpty()) return;
-        Map<String, String> data = Map.of("eventId", UUID.randomUUID().toString(), "reason", changed.reason(),
-                                          "occurredAt", Instant.now().toString());
         sender.execute(() -> {
             for (Subscription subscription : new ArrayList<>(targets)) {
                 try {
                     subscription.emitter().send(SseEmitter.event().id(data.get("eventId"))
-                        .name("dashboard.updated").data(data, MediaType.APPLICATION_JSON));
+                        .name(eventName).data(data, MediaType.APPLICATION_JSON));
                     sent.increment();
                 } catch (IOException | IllegalStateException e) {
                     failed.increment();
-                    remove(changed.customerId(), subscription);
+                    remove(key, subscription);
                     subscription.emitter().completeWithError(e);
                 }
             }
@@ -120,13 +138,13 @@ public class DashboardEventBroker {
     @Scheduled(fixedDelayString = "#{${app.events.heartbeat-seconds:20} * 1000}")
     void heartbeat() {
         Instant now = Instant.now();
-        subscriptions.forEach((customerId, list) -> {
+        subscriptions.forEach((key, list) -> {
             for (Subscription subscription : list) {
                 if (!subscription.expiresAt().isAfter(now)) { subscription.emitter().complete(); continue; }
                 try {
                     subscription.emitter().send(SseEmitter.event().comment("keepalive"));
                 } catch (IOException | IllegalStateException e) {
-                    remove(customerId, subscription);
+                    remove(key, subscription);
                     subscription.emitter().completeWithError(e);
                 }
             }
@@ -135,11 +153,11 @@ public class DashboardEventBroker {
 
     int connections() { return total.get(); }
 
-    private synchronized void remove(UUID customerId, Subscription subscription) {
-        List<Subscription> mine = subscriptions.get(customerId);
+    private synchronized void remove(Key key, Subscription subscription) {
+        List<Subscription> mine = subscriptions.get(key);
         if (mine != null && mine.remove(subscription)) {
             total.decrementAndGet();
-            if (mine.isEmpty()) subscriptions.remove(customerId, mine);
+            if (mine.isEmpty()) subscriptions.remove(key, mine);
         }
     }
 

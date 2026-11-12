@@ -23,7 +23,8 @@ const unique = () => `reg-${Date.now()}-${Math.floor(Math.random() * 1e6)}@examp
 async function openRegistration(page: Page, returnTo?: string) {
   await page.goto(`${APP}/register${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`);
   await page.waitForURL(`${KEYCLOAK}/**`);
-  await expect(page.getByRole("heading", { name: "Create your FINIX account" })).toBeVisible();
+  // generous timeout: the first request to Keycloak's registration endpoint after idle is slow
+  await expect(page.getByRole("heading", { name: "Create your FINIX account" })).toBeVisible({ timeout: 25_000 });
 }
 async function fill(page: Page, v: { first?: string; last?: string; email: string; password?: string; confirm?: string; terms?: boolean }) {
   await page.getByLabel("First name").fill(v.first ?? "Nia");

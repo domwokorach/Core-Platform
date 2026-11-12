@@ -2,8 +2,8 @@
   "realm": "finix",
   "enabled": true,
   "displayName": "FINIX Development",
-  "registrationAllowed": false,
-  "resetPasswordAllowed": false,
+  "registrationAllowed": true,
+  "resetPasswordAllowed": true,
   "loginWithEmailAllowed": true,
   "clients": [
     {
@@ -13,9 +13,16 @@
       "standardFlowEnabled": true,
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
-      "redirectUris": ["http://localhost:3000/auth/callback"],
-      "webOrigins": ["http://localhost:3000"],
-      "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "http://localhost:3000" },
+      "redirectUris": [
+        "http://localhost:3000/auth/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:3000/login*"
+      },
       "protocol": "openid-connect",
       "protocolMappers": [
         {
@@ -29,7 +36,8 @@
             "access.token.claim": "true"
           }
         }
-      ]
+      ],
+      "baseUrl": "http://localhost:3000/login"
     }
   ],
   "users": [
@@ -41,7 +49,54 @@
       "lastName": "Morgan",
       "enabled": true,
       "emailVerified": true,
-      "credentials": [{ "type": "password", "value": "DemoPass123!", "temporary": false }]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "DemoPass123!",
+          "temporary": false
+        }
+      ],
+      "attributes": {
+        "termsAccepted": [
+          "true"
+        ]
+      }
     }
-  ]
+  ],
+  "loginTheme": "finix-dev",
+  "eventsEnabled": true,
+  "eventsExpiration": 604800,
+  "bruteForceProtected": true,
+  "failureFactor": 10,
+  "maxFailureWaitSeconds": 300,
+  "waitIncrementSeconds": 60,
+  "accessCodeLifespanLogin": 1800,
+  "accessCodeLifespanUserAction": 900,
+  "accessCodeLifespan": 60,
+  "registrationEmailAsUsername": true,
+  "verifyEmail": true,
+  "duplicateEmailsAllowed": false,
+  "passwordPolicy": "length(10) and notUsername and notEmail",
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "no-reply@finix.local",
+    "fromDisplayName": "FINIX",
+    "ssl": "false",
+    "starttls": "false",
+    "auth": "false"
+  },
+  "components": {
+    "org.keycloak.userprofile.UserProfileProvider": [
+      {
+        "providerId": "declarative-user-profile",
+        "subComponents": {},
+        "config": {
+          "kc.user.profile.config": [
+            "{\"attributes\": [{\"name\": \"username\", \"displayName\": \"${username}\", \"validations\": {\"length\": {\"min\": 3, \"max\": 255}, \"username-prohibited-characters\": {}, \"up-username-not-idn-homograph\": {}}, \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"multivalued\": false}, {\"name\": \"email\", \"displayName\": \"${email}\", \"validations\": {\"email\": {}, \"length\": {\"max\": 255}}, \"required\": {\"roles\": [\"user\"]}, \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"multivalued\": false}, {\"name\": \"firstName\", \"displayName\": \"First name\", \"validations\": {\"length\": {\"max\": 255}, \"person-name-prohibited-characters\": {}}, \"required\": {\"roles\": [\"user\"]}, \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"multivalued\": false}, {\"name\": \"lastName\", \"displayName\": \"Last name\", \"validations\": {\"length\": {\"max\": 255}, \"person-name-prohibited-characters\": {}}, \"required\": {\"roles\": [\"user\"]}, \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"multivalued\": false}, {\"name\": \"termsAccepted\", \"displayName\": \"Terms acceptance\", \"validations\": {\"options\": {\"options\": [\"true\"]}}, \"required\": {\"roles\": [\"user\"]}, \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\", \"user\"]}, \"multivalued\": false, \"annotations\": {\"inputType\": \"checkbox\"}}], \"groups\": []}"
+          ]
+        }
+      }
+    ]
+  }
 }

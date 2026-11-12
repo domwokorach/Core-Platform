@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -30,12 +30,20 @@ export function DevDemoBadge() {
  * Local-development demo sign-in. The credentials are checked by the server-only /api/demo/login route (404 in production);
  * nothing secret lives in this bundle, no token is created and nothing is stored in the browser.
  */
-export function DemoSignInForm({ onSuccess }: { onSuccess: () => void }) {
+export function DemoSignInForm({ onSuccess, prefill }: { onSuccess: () => void; prefill?: { email: string; password: string; n: number } }) {
   const reduce = useReducedMotion();
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { register, handleSubmit, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: "", password: "" }, mode: "onTouched" });
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: "", password: "" }, mode: "onTouched" });
+
+  // "Use demo credentials" only fills the controlled fields; the user still submits and the server still verifies.
+  useEffect(() => {
+    if (!prefill) return;
+    setValue("email", prefill.email, { shouldValidate: true });
+    setValue("password", prefill.password, { shouldValidate: true });
+    setError(null);
+  }, [prefill, setValue]);
 
   async function submit(values: Values) {
     if (busy) return;

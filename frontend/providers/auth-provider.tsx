@@ -65,7 +65,9 @@ export function AuthProvider({ children, demoAvailable = false }: { children: Re
   useEffect(() => {
     const events = getUserManager().events;
     const loaded = (u: User) => setUser(u);
-    const failed = () => endSession();
+    // Only a session that was live in this tab can "end". A stored user that was already expired at page load is not a
+    // failure: the route guard sends the visitor through /login, where the still-valid Keycloak session signs them back in silently.
+    const failed = () => { if (ref.current) endSession(); };
     events.addUserLoaded(loaded);
     events.addSilentRenewError(failed);
     events.addAccessTokenExpired(failed);

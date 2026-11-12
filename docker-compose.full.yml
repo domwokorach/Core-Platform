@@ -1,0 +1,44 @@
+# Full stack: docker compose -f docker-compose.yml -f docker-compose.full.yml up --build -d
+# Browser URLs: web http://localhost:3000, API http://localhost:8080, Keycloak http://localhost:8081.
+services:
+  keycloak:
+    healthcheck:
+      # Keycloak 26 has no curl; speak HTTP/1.1 (with a Host header, which Keycloak requires) over bash's /dev/tcp.
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /realms/finix/.well-known/openid-configuration HTTP/1.1\\r\\nHost: localhost:8081\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q '200'"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+  backend:
+    build: ./backend
+    depends_on:
+      postgres: { condition: service_healthy }
+      keycloak: { condition: service_healthy }
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}   # dev = local-only demo seed data; never use as-is in production
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-finix}
+      DB_USER: ${POSTGRES_USER:-finix}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?run 'bash scripts/setup-env.sh' to generate .env}
+      OIDC_ISSUER_URI: ${JWT_ISSUER_URI:-http://localhost:8081/realms/finix}   # must equal the token `iss` (browser-facing URL)
+      OIDC_JWKS_URI: ${JWT_JWKS_URI:-http://keycloak:8080/realms/finix/protocol/openid-connect/certs}  # signing keys over the container network
+      OIDC_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-finix-web}
+      OIDC_AUDIENCE: ${JWT_AUDIENCE:-finix-api}
+      APP_ALLOWED_ORIGIN: ${APP_ALLOWED_ORIGIN:-http://localhost:3000}
+      # Optional backend-only integration keys (empty disables the feature). Never exposed to the browser.
+      TWELVE_DATA_API_KEY: ${TWELVE_DATA_API_KEY:-}
+      MARKET_DATA_REALTIME_ENTITLED: ${MARKET_DATA_REALTIME_ENTITLED:-false}
+      TWELVE_DATA_CREDITS_PER_MINUTE: ${TWELVE_DATA_CREDITS_PER_MINUTE:-8}
+      ALPACA_API_KEY_ID: ${ALPACA_API_KEY_ID:-}
+      ALPACA_API_SECRET_KEY: ${ALPACA_API_SECRET_KEY:-}
+    ports: ["127.0.0.1:8080:8080"]
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
+        NEXT_PUBLIC_OIDC_AUTHORITY: http://localhost:8081/realms/finix
+        NEXT_PUBLIC_OIDC_CLIENT_ID: finix-web
+        NEXT_PUBLIC_APP_ORIGIN: http://localhost:3000
+        # publishable Logo.dev key from .env (either name); empty = neutral icons only
+        NEXT_PUBLIC_LOGO_DEV_TOKEN: ${NEXT_PUBLIC_LOGO_DEV_TOKEN:-${LOGO_DEV_TOKEN:-}}
+    depends_on: [backend]
+    ports: ["127.0.0.1:3000:3000"]

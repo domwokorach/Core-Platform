@@ -1,5 +1,6 @@
 package com.finix.banking.config;
 
+import com.finix.banking.auth.CustomerProvisioningFilter;
 import jakarta.servlet.DispatcherType;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +20,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -28,7 +30,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableWebSecurity
 public class SecurityConfig {
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http,
+    SecurityFilterChain securityFilterChain(HttpSecurity http, CustomerProvisioningFilter provisioning,
         @Value("${app.expose-prometheus:false}") boolean exposePrometheus,
         @Value("${app.expose-api-docs:false}") boolean exposeApiDocs) throws Exception {
         return http
@@ -45,14 +47,17 @@ public class SecurityConfig {
                 auth.anyRequest().authenticated();
             })
             .oauth2ResourceServer(resource -> resource.jwt(Customizer.withDefaults()))
+            .addFilterAfter(provisioning, BearerTokenAuthenticationFilter.class)
             .build();
     }
 
     @Bean
     JwtDecoder jwtDecoder(@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String issuer,
                           @Value("${app.required-client-id}") String requiredClientId,
-                          @Value("${app.audience}") String audience) {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(issuer + "/protocol/openid-connect/certs").build();
+                          @Value("${app.audience}") String audience,
+                          @Value("${app.jwk-set-uri:}") String jwkSetUri) {
+        // `issuer` is the browser-facing URL that tokens carry in `iss`; in containers the keys are fetched over the internal network.
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri.isBlank() ? issuer + "/protocol/openid-connect/certs" : jwkSetUri).build();
         decoder.setJwtValidator(tokenValidator(issuer, requiredClientId, audience));
         return decoder;
     }
@@ -75,7 +80,7 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource(@Value("${app.allowed-origin}") String origin) {
         CorsConfiguration cors = new CorsConfiguration();
         cors.setAllowedOrigins(List.of(origin));
-        cors.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        cors.setAllowedMethods(List.of("GET", "POST", "PATCH", "OPTIONS"));
         cors.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key"));
         cors.setExposedHeaders(List.of("Location"));
         cors.setMaxAge(3600L);

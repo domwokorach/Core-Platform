@@ -163,3 +163,30 @@ for (const [name, width, height] of [["mobile", 390, 844], ["tablet", 820, 1180]
     await page.screenshot({ path: `/var/folders/1g/28s9xk4s51qblm98xrykytp40000gn/T/shots/demo-${name}.png` });
   });
 }
+
+test("Development Account panel is collapsed, toggles, hides controls, and only fills the form", async ({ page }) => {
+  await page.goto(`${DEMO}/login`);
+  const toggle = page.getByRole("button", { name: /Development Account/ });
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  const fill = page.getByRole("button", { name: "Use demo credentials" });
+  await expect(fill).toBeHidden();
+  await toggle.focus();
+  await page.keyboard.press("Enter");
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByText("DemoPass123!")).toBeVisible();
+  await page.keyboard.press("Space");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(fill).toBeHidden();
+  await toggle.click();
+  await fill.click();
+  await expect(page.getByLabel("Email address")).toHaveValue("alex");
+  await expect(page.getByLabel("Password", { exact: true })).toHaveValue("DemoPass123!");
+  expect(page.url()).toContain("/login"); // never auto-signs-in
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test("plain dev server does not render the Development Account panel", async ({ page }) => {
+  await page.goto(`${PLAIN_DEV}/login`);
+  await expect(page.getByText("DemoPass123!")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Development Account/ })).toHaveCount(0);
+});
