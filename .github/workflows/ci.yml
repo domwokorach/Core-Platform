@@ -86,7 +86,7 @@ jobs:
       - uses: docker/setup-buildx-action@v3
       # Build only (no push). Vulnerability scanning of the images runs in security.yml so build status and scan status stay separate.
       # Build arguments are browser-public URLs; no secrets are passed to any image.
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
           push: false
