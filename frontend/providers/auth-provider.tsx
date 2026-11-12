@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "oidc-client-ts";
 import { getUserManager } from "@/lib/auth";
+import { safeRedirectPath } from "@/lib/auth-redirect";
 
 interface AuthValue {
   /** Valid, unexpired OIDC user, or null (demo mode). */
@@ -49,9 +50,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<AuthValue>(() => ({
     user, loading, authError, endSession,
     getToken: () => (ref.current && !ref.current.expired ? ref.current.access_token : null),
+    // Sends the user to the FINIX sign-in screen, remembering where they were.
     signIn: async () => {
-      try { setAuthError(null); await getUserManager().signinRedirect(); }
-      catch { setAuthError("Identity provider unreachable. Start Keycloak (docker compose up -d postgres keycloak) and try again."); }
+      const here = safeRedirectPath(window.location.pathname + window.location.search);
+      window.location.assign(here === "/" ? "/login" : `/login?returnTo=${encodeURIComponent(here)}`);
     },
     signOut: async () => { await getUserManager().signoutRedirect().catch(endSession); },
   }), [user, loading, authError, endSession]);

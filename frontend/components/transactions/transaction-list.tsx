@@ -5,7 +5,7 @@ import { RevealGroup } from "@/components/animations/reveal";
 import { rowEnter } from "@/lib/animations/variants";
 import { dateShort } from "@/lib/utils/format";
 import type { Row } from "@/hooks/use-activity";
-import { TxAmount } from "./tx-amount";
+import { TransactionAmount } from "./transaction-amount";
 import { TxIcon } from "./tx-icon";
 
 /** Compact tap-friendly rows used on mobile and in dashboard "recent activity". */
@@ -20,7 +20,7 @@ export function TransactionList({ rows, onSelect }: { rows: Row[]; onSelect: (r:
               <span className="block truncate text-sm font-medium">{r.merchant?.name ?? r.description}</span>
               <span className="block truncate text-xs text-muted-foreground">{dateShort(r.occurredAt)} · {r.merchant?.category ?? (r.kind === "transfer" ? "Transfer" : r.kind === "credit" ? "Credit" : "Debit")} · Completed</span>
             </span>
-            <TxAmount minor={r.amountMinor} currency={r.currency} kind={r.kind} className="text-[15px]" />
+            <TransactionAmount amountMinor={r.amountMinor} currency={r.currency} className="text-[15px]" />
           </button>
         </motion.div>
       ))}

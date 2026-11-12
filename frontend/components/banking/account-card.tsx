@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { Nfc } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { money } from "@/lib/utils/format";
+import { AccountBalance } from "./account-balance";
 import type { Account } from "@/types/banking";
 
 /**
@@ -27,7 +28,7 @@ export function AccountCard({ account, holder, variant = "navy", type, selected,
       </div>
       <div className="relative">
         <p className="text-[11px] uppercase tracking-wider text-white/60">Balance</p>
-        <p className="num text-[1.75rem] font-semibold leading-tight tracking-tight">{money(account.balanceMinor, account.currency)}</p>
+        <p className="text-[1.75rem] leading-tight tracking-tight"><AccountBalance balanceMinor={account.balanceMinor} currency={account.currency} className="text-green-400" /></p>
       </div>
       <div className="relative flex items-end justify-between text-sm">
         <div className="min-w-0"><p className="truncate text-xs text-white/70">{holder}</p><p className="num mt-0.5 font-medium tracking-[0.18em]">{account.maskedNumber}</p></div>

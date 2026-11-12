@@ -106,10 +106,10 @@ test.describe("merchant logos on transaction history (demo data)", () => {
     await expect(page.locator("table tbody tr")).toHaveCount(7);
     const rows = await page.locator("table tbody tr").allInnerTexts();
     const text = rows.join("\n");
-    expect(text).toContain("−£70.00");   // Netflix
-    expect(text).toContain("−£14.99");   // Starbucks
-    expect(text).toContain("−£40.00");   // DKNY
-    expect(text).toContain("−£12.60");   // KFC
+    expect(text).toContain("-£70.00");   // Netflix
+    expect(text).toContain("-£14.99");   // Starbucks
+    expect(text).toContain("-£40.00");   // DKNY
+    expect(text).toContain("-£12.60");   // KFC
     expect(text).toContain("+£3,762.11"); // Payroll
     expect(text).not.toContain("$");
     await page.goto("/");
@@ -136,7 +136,7 @@ test.describe("merchant logos on transaction history (demo data)", () => {
     expect((await dlg.locator('[data-merchant-logo="netflix"]').boundingBox())!.width).toBe(56);
     await expect(dlg).toContainText("Entertainment");
     await expect(dlg).toContainText("Completed");
-    await expect(dlg).toContainText("−£70.00");
+    await expect(dlg).toContainText("-£70.00");
   });
 
   test("dashboard recent activity and notifications show logos", async ({ page }) => {
@@ -189,7 +189,7 @@ test("long merchant names truncate and amounts stay visible on mobile", async ({
   const row = page.getByRole("button", { name: /Starbucks Coffee/ }).first();
   const box = (await row.boundingBox())!;
   expect(box.x + box.width).toBeLessThanOrEqual(360);
-  await expect(row).toContainText("−£14.99");
+  await expect(row).toContainText("-£14.99");
 });
 
 test.describe("signed in: unknown merchants", () => {
@@ -222,7 +222,7 @@ test.describe("signed in: unknown merchants", () => {
     await expect(unknown.first().locator("img")).toHaveCount(0);
     await expect(unknown.first().locator("svg")).toHaveCount(1);
     await expect(page.locator("table").getByText("Acme Widgets Ltd", { exact: true })).toBeVisible();
-    await expect(page.locator("table").getByText("−£25.99")).toBeVisible();
+    await expect(page.locator("table").getByText("-£25.99")).toBeVisible();
     expect(m.requests.every(r => r.includes("/netflix.com?")), "only the verified merchant is ever requested").toBe(true);
   });
 });

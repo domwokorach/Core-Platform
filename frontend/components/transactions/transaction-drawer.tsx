@@ -8,7 +8,7 @@ import { KindBadge, StatusBadge } from "@/components/banking/status-badge";
 import { useIsMobile } from "@/hooks/use-media";
 import { dateLong } from "@/lib/utils/format";
 import type { Row } from "@/hooks/use-activity";
-import { TxAmount } from "./tx-amount";
+import { TransactionAmount } from "./transaction-amount";
 import { TxIcon } from "./tx-icon";
 
 /** Right-hand drawer on tablet/desktop, bottom sheet on mobile. */
@@ -23,7 +23,7 @@ export function TransactionDrawer({ tx, onClose }: { tx: Row | null; onClose: ()
               <TxIcon merchant={tx.merchant} name={tx.description} kind={tx.kind} size="lg" className="rounded-2xl" />
               <DialogTitle className="mt-4 text-base">{tx.merchant?.name ?? tx.description}</DialogTitle>
               <DialogDescription className="sr-only">Transaction details</DialogDescription>
-              <TxAmount minor={tx.amountMinor} currency={tx.currency} kind={tx.kind} className="mt-1 text-3xl tracking-tight" />
+              <TransactionAmount amountMinor={tx.amountMinor} currency={tx.currency} className="mt-1 text-3xl tracking-tight" />
               <div className="mt-3 flex gap-2"><StatusBadge status="posted" /><KindBadge kind={tx.kind} /></div>
             </div>
             <dl className="mt-8 divide-y rounded-xl border text-sm">

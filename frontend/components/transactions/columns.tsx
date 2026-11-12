@@ -2,7 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { KindBadge, StatusBadge } from "@/components/banking/status-badge";
 import { dateLong } from "@/lib/utils/format";
 import type { Row } from "@/hooks/use-activity";
-import { TxAmount } from "./tx-amount";
+import { TransactionAmount } from "./transaction-amount";
 import { TxIcon } from "./tx-icon";
 
 export const createColumnDef = (): ColumnDef<Row>[] => [
@@ -20,5 +20,5 @@ export const createColumnDef = (): ColumnDef<Row>[] => [
   { id: "status", header: "Status", enableSorting: false, cell: () => <StatusBadge status="posted" /> },
   { accessorKey: "occurredAt", header: "Date", cell: ({ getValue }) => <span className="whitespace-nowrap text-muted-foreground">{dateLong(getValue<string>())}</span> },
   { accessorKey: "reference", header: "Reference", enableSorting: false, cell: ({ getValue }) => <span className="font-mono text-xs text-muted-foreground">{getValue<string>()}</span> },
-  { accessorKey: "amountMinor", header: "Amount", cell: ({ row: { original: r } }) => <TxAmount minor={r.amountMinor} currency={r.currency} kind={r.kind} /> },
+  { accessorKey: "amountMinor", header: "Amount", cell: ({ row: { original: r } }) => <TransactionAmount amountMinor={r.amountMinor} currency={r.currency} /> },
 ];

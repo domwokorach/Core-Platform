@@ -1,5 +1,6 @@
 "use client";
 
+import { AccountBalance } from "@/components/banking/account-balance";
 import { Wallet } from "lucide-react";
 import { RevealGroup, RevealItem } from "@/components/animations/reveal";
 import { AccountCard } from "@/components/banking/account-card";
@@ -9,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAccounts, useDashboard } from "@/hooks/use-banking";
-import { money } from "@/lib/utils/format";
 
 export default function AccountsPage() {
   const { data: accounts = [], isLoading, error, refetch, isFetching } = useAccounts();
@@ -29,7 +29,7 @@ export default function AccountsPage() {
           <CardContent>
             <Table>
               <TableHeader><TableRow className="hover:bg-transparent"><TableHead>Account</TableHead><TableHead>Number</TableHead><TableHead>Currency</TableHead><TableHead className="text-right">Balance</TableHead></TableRow></TableHeader>
-              <TableBody>{accounts.map(a => <TableRow key={a.id}><TableCell className="font-medium">{a.displayName}</TableCell><TableCell className="num text-muted-foreground">{a.maskedNumber}</TableCell><TableCell>{a.currency}</TableCell><TableCell className="num text-right font-semibold">{money(a.balanceMinor, a.currency)}</TableCell></TableRow>)}</TableBody>
+              <TableBody>{accounts.map(a => <TableRow key={a.id}><TableCell className="font-medium">{a.displayName}</TableCell><TableCell className="num text-muted-foreground">{a.maskedNumber}</TableCell><TableCell>{a.currency}</TableCell><TableCell className="text-right"><AccountBalance balanceMinor={a.balanceMinor} currency={a.currency} className="font-semibold" /></TableCell></TableRow>)}</TableBody>
             </Table>
           </CardContent>
         </Card>

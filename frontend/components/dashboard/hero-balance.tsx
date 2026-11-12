@@ -3,6 +3,7 @@
 import { ArrowDownRight, ArrowUpRight, Send } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { AccountBalance } from "@/components/banking/account-balance";
 import { Skeleton } from "@/components/ui/skeleton";
 import { money, percent } from "@/lib/utils/format";
 import { useFilters } from "@/providers/filters-provider";
@@ -27,7 +28,7 @@ export function HeroBalance({ data, changeMinor, changePct, trend, loading }: { 
       <div className="relative flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 id="hero-title" className="text-[13px] font-medium text-white/70">Total balance</h2>
-          {loading || !data ? <Skeleton className="mt-3 h-11 w-60 bg-white/15" /> : <p className="num mt-2 text-[2.25rem] font-semibold leading-none tracking-tight sm:text-[2.75rem]">{money(data.totalBalanceMinor, data.currency)}</p>}
+          {loading || !data ? <Skeleton className="mt-3 h-11 w-60 bg-white/15" /> : <p className="num mt-2 text-[2.25rem] font-semibold leading-none tracking-tight sm:text-[2.75rem]"><AccountBalance balanceMinor={data.totalBalanceMinor} currency={data.currency} className="font-semibold text-green-400" /></p>}
           {!loading && data && (
             <p className="mt-3 flex flex-wrap items-center gap-2 text-sm text-white/75">
               <span data-accent className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-white/10 ${up ? "text-[#34d399]" : "text-[#f87171]"}`}>
@@ -40,7 +41,7 @@ export function HeroBalance({ data, changeMinor, changePct, trend, loading }: { 
         <Button asChild variant="secondary" className="bg-white/10 text-white hover:bg-white/20"><Link href="/transfers"><Send />Transfer</Link></Button>
       </div>
       <div className="relative grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-        <div><p className="text-xs text-white/60">Available</p>{data ? <p className="num mt-1 text-lg font-semibold">{money(data.totalBalanceMinor, data.currency)}</p> : <Skeleton className="mt-1 h-6 w-24 bg-white/15" />}<p className="mt-0.5 text-[11px] text-white/50">No holds on ledger</p></div>
+        <div><p className="text-xs text-white/60">Available</p>{data ? <p className="mt-1 text-lg"><AccountBalance balanceMinor={data.totalBalanceMinor} currency={data.currency} className="font-semibold text-green-400" /></p> : <Skeleton className="mt-1 h-6 w-24 bg-white/15" />}<p className="mt-0.5 text-[11px] text-white/50">No holds on ledger</p></div>
         <div><p className="text-xs text-white/60">Accounts</p><p className="num mt-1 text-lg font-semibold">{data?.accounts.length ?? "–"}</p></div>
         <div className="col-span-2 sm:col-span-1"><Spark data={trend} /></div>
       </div>

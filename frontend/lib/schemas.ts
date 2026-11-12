@@ -16,3 +16,12 @@ export const transferSchema = z.object({
 }).refine(v => v.sourceAccountId !== v.destinationAccountId, { path: ["destinationAccountId"], message: "Choose two different accounts" });
 
 export type TransferValues = z.infer<typeof transferSchema>;
+
+export const loginSchema = z.object({
+  identifier: z.string().trim()
+    .min(1, "Enter your email address or username")
+    .max(254, "That looks too long. Check your email address or username")
+    .refine(v => !/\s/.test(v), "Email addresses and usernames can't contain spaces"),
+});
+
+export type LoginValues = z.infer<typeof loginSchema>;

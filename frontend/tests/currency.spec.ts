@@ -1,7 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { compactMoney, formatGBP, money, signedMoney, toMinor } from "../lib/utils/format";
+import { compactMoney, formatGBP, money, formatTransactionAmount, toMinor } from "../lib/utils/format";
 
-// Unicode minus (U+2212) is used for negatives in signedMoney.
 test.describe("GBP formatting and pence arithmetic", () => {
   test("pence render as British pounds", () => {
     expect(money(425075)).toBe("£4,250.75");
@@ -21,8 +20,8 @@ test.describe("GBP formatting and pence arithmetic", () => {
     }
   });
   test("signed and compact amounts", () => {
-    expect(signedMoney(-1499)).toBe("−£14.99");
-    expect(signedMoney(65000)).toBe("+£650.00");
+    expect(formatTransactionAmount(-1499)).toBe("-£14.99");
+    expect(formatTransactionAmount(65000)).toBe("+£650.00");
     expect(compactMoney(1_000_000)).toBe("£10k");
   });
   test("decimal input converts to exact integer pence", () => {

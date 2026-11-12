@@ -21,10 +21,13 @@ export function toMinor(decimal: string): number {
   return Number(whole) * 100 + Number((frac + "00").slice(0, 2));
 }
 
-/** Signed amount for transaction rows: "+£12.00" / "−£12.00". */
-export function signedMoney(minor: number, currency = DEFAULT_CURRENCY) {
-  const abs = money(Math.abs(minor), currency);
-  return minor > 0 ? `+${abs}` : minor < 0 ? `−${abs}` : abs;
+/**
+ * Transaction amount from the entry's own account perspective: "-£12.00" / "+£12.00" / "£0.00".
+ * Presentation only: the ledger keeps integer pence.
+ */
+export function formatTransactionAmount(amountMinor: number, currency = DEFAULT_CURRENCY) {
+  const abs = money(Math.abs(amountMinor), currency);
+  return amountMinor < 0 ? `-${abs}` : amountMinor > 0 ? `+${abs}` : abs;
 }
 
 export const compactMoney = (minor: number, currency = DEFAULT_CURRENCY) =>
