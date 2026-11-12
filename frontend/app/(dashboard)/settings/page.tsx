@@ -2,6 +2,7 @@
 
 import { Monitor, Moon, ShieldCheck, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import { RadioGroup, RadioGroupItem } from "@/components/paceui/motion/radio-group";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -19,13 +20,14 @@ export default function SettingsPage() {
       <Card>
         <CardHeader><div><CardTitle>Appearance</CardTitle><CardDescription>Choose how FINIX looks on this device</CardDescription></div></CardHeader>
         <CardContent>
-          <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-2">
+          <RadioGroup value={mounted ? (theme ?? "system") : "system"} onValueChange={v => setTheme(String(v))} aria-label="Theme" className="grid grid-cols-3 gap-2">
             {THEMES.map(({ v, l, i: Icon }) => (
-              <button key={v} role="radio" aria-checked={mounted && theme === v} onClick={() => setTheme(v)} className={cn("flex h-20 flex-col items-center justify-center gap-2 rounded-xl border text-sm font-medium transition-colors hover:bg-muted", mounted && theme === v && "border-brand bg-accent text-accent-foreground")}>
-                <Icon className="size-5" />{l}
-              </button>
+              <label key={v} className={cn("flex h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border text-sm font-medium transition-colors hover:bg-muted has-focus-visible:ring-2 has-focus-visible:ring-ring", mounted && theme === v && "border-brand bg-accent text-accent-foreground")}>
+                <Icon className="size-5" aria-hidden />
+                <span className="flex items-center gap-2"><RadioGroupItem value={v} aria-label={l} />{l}</span>
+              </label>
             ))}
-          </div>
+          </RadioGroup>
           <p className="mt-4 text-xs text-muted-foreground">Animations follow your operating system’s “reduce motion” setting.</p>
         </CardContent>
       </Card>

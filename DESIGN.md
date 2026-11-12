@@ -95,7 +95,7 @@ All built on Radix/shadcn-style primitives in `frontend/components/ui`.
 | **Dialog / Drawer** | Radix Dialog, focus-trapped, labelled; side drawers (`vaul`) on mobile. |
 | **Table** | TanStack Table; sortable headers are buttons; full table from `md`, card list below. |
 | **Tabs, Dropdown, Tooltip, Popover, Select** | Radix; keyboard-operable; do not hide essential information in tooltips. |
-| **Navigation** | Sidebar (17 rem; collapses to 4.75 rem) on desktop; drawer on tablet; bottom navigation on mobile. Active item is charcoal with white text. |
+| **Navigation** | PaceUI motion sidebar (`components/paceui/motion/sidebar.tsx`, wrapped by `components/layout/app-sidebar.tsx`): persistent rail from 1024 px (17 rem, collapses to 4.75 rem; state kept in `localStorage` and the component's `sidebar_state` UI cookie; Ctrl/Cmd+B toggles), a sheet below 1024 px, plus bottom navigation on mobile. The current page has `aria-current="page"`; the highlight is PaceUI's soft grey pill that follows hover and focus. |
 | **Transaction row** | Merchant tile, name, secondary line (account · category · status), right-aligned amount. See §8. |
 | **Notifications** | Popover list plus `sonner` toasts; status uses icon + text, not colour only. |
 | **Skeletons** | Shimmer placeholders shaped like the final content; no layout shift. |
@@ -176,3 +176,11 @@ Defined in `frontend/lib/animations/variants.ts`: easing `[0.22, 1, 0.36, 1]`; d
 ## 14. Change process
 
 New UI patterns are added here with their rationale, accessibility notes and tests. Do not introduce new colours, fonts or radii without updating the tokens and this document.
+
+
+## 15. Motion components (PaceUI) and card artwork
+
+* **Where they live:** `frontend/components/paceui/motion/*` (copied from the PaceUI registry, reviewed before use; `use client` added; Base UI, `react-day-picker` and `date-fns` are the only new dependencies) and `components/ui/glare-card.tsx` (Aceternity glare card, installed but unused: its fixed 17:21 portrait aspect would distort the card artwork).
+* **Integrated:** tabs (card types, accounts), alert (card status, live-connection status), slider (spending limits, kept in sync with the validated number inputs), spring button (`ActionButton`: subtle press, no shake, plain `Button` for reduced motion), select (account, currency), calendar (date filter), pagination, empty state, progress (`components/ui/progress.tsx` now wraps it), radio group (theme), scroll area (notifications list), sidebar.
+* **Card artwork:** `public/cards/finix-visa-black.png` (transparent PNG) and `public/cards/finix-visa-silver-cutout.png`, a derived copy of `finix-visa-silver.png` (opaque black background) with only the border-connected background made transparent so it sits cleanly on light pages; the card pixels and the original file are unchanged. Artwork is always shown whole at its natural aspect ratio. The glare is a pointer-tracked highlight masked to the card shape (mouse only, off for reduced motion).
+* **Not integrated:** Aceternity's logo cloud, three-column and centered-with-logo blocks are paid Pro items (API token required) and were not installed; FINIX also has no public landing page or verified partners to show.

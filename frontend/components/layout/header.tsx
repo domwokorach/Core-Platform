@@ -54,7 +54,7 @@ export function Header({ onMenu }: { onMenu: () => void }) {
           <DateRangePicker className="w-[10.5rem] shrink-0 sm:w-44 lg:w-40 xl:w-44" />
         </div>
         <div className="flex items-center gap-1 sm:gap-1.5">
-          <LiveIndicator className="hidden xl:inline-flex" />
+          <LiveIndicator />
           <ThemeToggle />
           <NotificationsPopover />
           <ProfileMenu />

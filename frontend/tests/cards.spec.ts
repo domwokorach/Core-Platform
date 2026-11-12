@@ -87,7 +87,8 @@ test.describe("cards page (signed in, real API)", () => {
 
     await page.getByRole("button", { name: "Freeze Card" }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Freeze card" }).click();
-    await expect(everyday).toContainText("Frozen");
+    // the carousel card exposes its status in its accessible name (the caption below the artwork repeats it)
+    await expect(everyday).toHaveAttribute("aria-label", /Frozen/);
     await page.reload();
     await expect(page.getByRole("button", { name: /Everyday account virtual card.*Frozen/ }).first()).toBeVisible();
 
@@ -102,7 +103,7 @@ test.describe("cards page (signed in, real API)", () => {
   test("limits are validated in the dialog and by the server, then enforced on authorizations", async ({ page }) => {
     await signIn(page);
     await page.getByRole("button", { name: /Everyday account virtual card/ }).first().click();
-    await page.getByRole("button", { name: "Spending limits" }).click();
+    await page.getByRole("button", { name: "Card settings" }).click();
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("Daily limit (GBP)").fill("6000");
     await dialog.getByRole("button", { name: "Save limits" }).click();
@@ -126,7 +127,7 @@ test.describe("cards page (signed in, real API)", () => {
     expect(server.status).toBe(422);
 
     // restore the seeded defaults
-    await page.getByRole("button", { name: "Spending limits" }).click();
+    await page.getByRole("button", { name: "Card settings" }).click();
     await dialog.getByLabel("Single-transaction limit (GBP)").fill("250");
     await dialog.getByRole("button", { name: "Save limits" }).click();
     await expect(dialog).toBeHidden();

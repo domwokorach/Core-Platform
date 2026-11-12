@@ -3,6 +3,8 @@
 import { AccountBalance } from "@/components/banking/account-balance";
 import { Wallet } from "lucide-react";
 import { RevealGroup, RevealItem } from "@/components/animations/reveal";
+import { useState } from "react";
+import { AccountActivity } from "@/components/banking/account-activity";
 import { AccountCardPicker } from "@/components/banking/account-card-picker";
 import { EmptyState } from "@/components/banking/empty-state";
 import { ErrorState } from "@/components/banking/error-state";
@@ -14,13 +16,15 @@ import { useAccounts, useDashboard } from "@/hooks/use-banking";
 export default function AccountsPage() {
   const { data: accounts = [], isLoading, error, refetch, isFetching } = useAccounts();
   const { data: dash } = useDashboard();
+  const [selectedId, setSelectedId] = useState<string>();
   if (error) return <ErrorState message={error.message} onRetry={() => void refetch()} retrying={isFetching} />;
   if (isLoading) return <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{[0, 1].map(i => <Skeleton key={i} className="aspect-[1.6/1] rounded-2xl" />)}</div>;
   if (!accounts.length) return <EmptyState icon={Wallet} title="No accounts yet" description="Your accounts will appear here once they’re opened." />;
   const holder = dash?.customerName ?? "Account holder";
   return (
     <RevealGroup className="space-y-5">
-      <RevealItem><AccountCardPicker accounts={accounts} holder={holder} /></RevealItem>
+      <RevealItem><AccountCardPicker accounts={accounts} holder={holder} selectedId={selectedId ?? accounts[0].id} onSelectedChange={setSelectedId} /></RevealItem>
+      <RevealItem><AccountActivity accounts={accounts} accountId={selectedId ?? accounts[0].id} onAccountChange={setSelectedId} /></RevealItem>
       <RevealItem>
         <Card>
           <CardHeader><div><CardTitle>Account details</CardTitle><CardDescription>Balances are summed from immutable ledger entries</CardDescription></div></CardHeader>

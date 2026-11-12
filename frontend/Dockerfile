@@ -26,6 +26,11 @@ ENV NODE_ENV=production
 ENV PORT=3000
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+# `public/` (card artwork, icons, brand assets) is not part of the standalone output and must be copied explicitly.
+COPY --from=builder /app/public ./public
+# next/image writes optimised images to .next/cache, which must be writable by the unprivileged runtime user;
+# `public/` must be readable by that user whatever the file modes were on the build host.
+RUN mkdir -p .next/cache && chown -R node:node .next && chmod -R a+rX public
 EXPOSE 3000
 USER node
 CMD ["node", "server.js"]

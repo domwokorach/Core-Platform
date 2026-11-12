@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowRight, CheckCircle2, Copy, LockKeyhole, ShieldCheck, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
+import { ActionButton } from "@/components/banking/action-button";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -110,9 +111,9 @@ export function TransferFlow() {
           <Input id="description" maxLength={120} placeholder="e.g. Monthly savings" className="mt-1.5" aria-invalid={Boolean(errors.description)} aria-describedby={errors.description ? "description-err" : undefined} {...register("description")} />
           <FieldError id="description-err" message={errors.description?.message} />
         </div>
-        <Button type="submit" size="lg" variant="brand" className="w-full" disabled={isLoading || (Boolean(user) && accounts.length < 2)}>
+        <ActionButton type="submit" size="lg" variant="brand" className="w-full" disabled={isLoading || (Boolean(user) && accounts.length < 2)}>
           {user ? "Review transfer" : "Sign in to transfer"}<ArrowRight />
-        </Button>
+        </ActionButton>
         <p id="demo-note" className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground"><LockKeyhole className="size-3.5" />{user ? "Posted atomically to the double-entry ledger" : "No funds move in demo mode"}</p>
         {!user && <button type="button" onClick={() => void signIn()} className="sr-only">Sign in</button>}
       </form>
@@ -133,7 +134,7 @@ export function TransferFlow() {
           <AnimatePresence>{serverError && <motion.p role="alert" initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="mt-4 flex gap-2 rounded-lg bg-destructive-soft p-3 text-sm text-destructive-text"><TriangleAlert className="mt-0.5 size-4 shrink-0" />{serverError}</motion.p>}</AnimatePresence>
           <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => closeDialog(false)} disabled={mutation.isPending}>Cancel</Button>
-            <Button variant="brand" onClick={() => void confirm()} loading={mutation.isPending}>{serverError ? "Try again" : "Confirm & send"}</Button>
+            <ActionButton variant="brand" onClick={() => void confirm()} loading={mutation.isPending}>{serverError ? "Try again" : "Confirm & send"}</ActionButton>
           </div>
         </DialogContent>
       </Dialog>

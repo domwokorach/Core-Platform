@@ -8,7 +8,7 @@ const APP = "http://localhost:3000";
 const KEYCLOAK = "http://localhost:8081";
 test.describe.configure({ timeout: 90_000 });
 
-test("Visa mark is shown on designer cards and sandbox cards when branding is approved", async ({ page, request }) => {
+test("Visa mark is shown on designer cards, and the sandbox card artwork loads", async ({ page, request }) => {
   const up = await request.get(`${KEYCLOAK}/realms/finix/.well-known/openid-configuration`, { timeout: 5000 }).then(r => r.ok(), () => false);
   test.skip(!up, "stack not reachable");
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -27,8 +27,12 @@ test("Visa mark is shown on designer cards and sandbox cards when branding is ap
     expect(await img.evaluate((el: HTMLImageElement) => el.naturalWidth > 0), `${design} image loaded`).toBe(true);
   }
   await expect(gallery.getByText("Demo card")).toHaveCount(0);
-  const sandbox = page.getByRole("list", { name: "Your virtual cards" }).locator('img[alt="Visa"]');
-  await expect(sandbox.first()).toBeVisible({ timeout: 20_000 });
+  // The sandbox cards use the supplied Visa artwork (the Visa mark is part of the image): both card images must load whole.
+  for (const alt of ["FINIX Black Visa card", "FINIX Silver Visa card"]) {
+    const art = page.getByRole("list", { name: "Your virtual cards" }).getByRole("img", { name: alt }).first();
+    await expect(art, alt).toBeVisible({ timeout: 20_000 });
+    expect(await art.evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0), `${alt} loaded`).toBe(true);
+  }
   await gallery.scrollIntoViewIfNeeded(); await page.waitForTimeout(800);
   await gallery.screenshot({ path: "/var/folders/1g/28s9xk4s51qblm98xrykytp40000gn/T/shots/designer-cards-visa.png" });
   await page.getByRole("list", { name: "Your virtual cards" }).screenshot({ path: "/var/folders/1g/28s9xk4s51qblm98xrykytp40000gn/T/shots/sandbox-cards-visa.png" });

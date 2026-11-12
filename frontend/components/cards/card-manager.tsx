@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Ban, CheckCircle2, Globe, Link2, PlayCircle, Receipt, SlidersHorizontal, Snowflake } from "lucide-react";
+import { Ban, CheckCircle2, Globe, IdCard, Link2, PlayCircle, Receipt, SlidersHorizontal, Snowflake } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { ActionButton } from "@/components/banking/action-button";
 import { Card as Panel, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { SpendChart } from "@/components/charts/lazy-cards";
 import { CardActivityPanel } from "./card-activity";
 import { CardStatusBadge } from "./card-status";
 import { ConfirmDialog } from "./confirm-dialog";
+import { CardDetailsDialog } from "./card-details-dialog";
+import { CardStatusAlert } from "./card-status-alert";
 import { LimitsDialog } from "./limits-dialog";
 import { SimulateDialog } from "./simulate-dialog";
 import { reportCardError, useCardActivity, useCardCommand, useCardTransactions } from "@/hooks/use-cards";
@@ -42,6 +44,7 @@ export function CardManager({ card }: { card: Card }) {
   const act = useCardActivity(card.id);
   const [pending, setPending] = useState<CardCommand | null>(null);
   const [limitsOpen, setLimitsOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [simOpen, setSimOpen] = useState(false);
   const terminal = card.status === "BLOCKED" || card.status === "CLOSED";
 
@@ -61,12 +64,14 @@ export function CardManager({ card }: { card: Card }) {
           <CardDescription className="num">{card.maskedReference}</CardDescription>
         </div></CardHeader>
         <CardContent className="space-y-6">
+          <CardStatusAlert card={card} />
           <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-            {card.status === "PENDING_ACTIVATION" && <Button className="h-11" onClick={guard(() => setPending("activate"))}><CheckCircle2 />Activate card</Button>}
-            {card.status === "ACTIVE" && <Button variant="outline" className="h-11" onClick={guard(() => setPending("freeze"))}><Snowflake />Freeze Card</Button>}
-            {card.status === "FROZEN" && <Button className="h-11" onClick={guard(() => setPending("unfreeze"))}><Snowflake />Unfreeze Card</Button>}
-            {!terminal && <Button variant="outline" className="h-11" onClick={guard(() => setLimitsOpen(true))}><SlidersHorizontal />Spending limits</Button>}
-            {!terminal && <Button variant="outline" className="h-11" onClick={guard(() => setSimOpen(true))}><PlayCircle />Simulate purchase</Button>}
+            {card.status === "PENDING_ACTIVATION" && <ActionButton className="h-11" onClick={guard(() => setPending("activate"))}><CheckCircle2 />Activate card</ActionButton>}
+            {card.status === "ACTIVE" && <ActionButton variant="outline" className="h-11" onClick={guard(() => setPending("freeze"))}><Snowflake />Freeze Card</ActionButton>}
+            {card.status === "FROZEN" && <ActionButton className="h-11" onClick={guard(() => setPending("unfreeze"))}><Snowflake />Unfreeze Card</ActionButton>}
+            <ActionButton variant="outline" className="h-11" onClick={() => setDetailsOpen(true)}><IdCard />Card details</ActionButton>
+            {!terminal && <ActionButton variant="outline" className="h-11" onClick={guard(() => setLimitsOpen(true))}><SlidersHorizontal />Card settings</ActionButton>}
+            {!terminal && <ActionButton variant="outline" className="h-11" onClick={guard(() => setSimOpen(true))}><PlayCircle />Simulate purchase</ActionButton>}
           </div>
           {terminal && <p role="note" className="flex items-start gap-2 rounded-xl border-2 border-foreground/70 bg-muted px-3.5 py-3 text-sm"><Ban className="mt-0.5 size-4 shrink-0" aria-hidden />This card is {card.status.toLowerCase()} and can no longer be changed, activated or unfrozen. Contact support if you think this is a mistake.</p>}
 
@@ -100,6 +105,7 @@ export function CardManager({ card }: { card: Card }) {
 
       <ConfirmDialog open={pending !== null} title={pending ? COPY[pending].title : ""} description={pending ? COPY[pending].body : ""} confirmLabel={pending ? COPY[pending].confirm : ""}
         pending={command.isPending} onConfirm={() => void run()} onClose={() => setPending(null)} />
+      <CardDetailsDialog card={card} open={detailsOpen} onClose={() => setDetailsOpen(false)} />
       <LimitsDialog card={card} open={limitsOpen} onClose={() => setLimitsOpen(false)} />
       <SimulateDialog card={card} open={simOpen} onClose={() => setSimOpen(false)} />
     </div>

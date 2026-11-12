@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LimitSlider } from "./limit-slider";
 import { useIsMobile } from "@/hooks/use-media";
 import { reportCardError, useUpdateLimits } from "@/hooks/use-cards";
 import { ApiError } from "@/lib/api/client";
@@ -26,7 +27,7 @@ const FIELDS = [
 export function LimitsDialog({ card, open, onClose }: { card: Card; open: boolean; onClose: () => void }) {
   const mobile = useIsMobile();
   const update = useUpdateLimits();
-  const { register, control, handleSubmit, reset, setError, formState: { errors } } = useForm<CardLimitsValues>({ resolver: zodResolver(cardLimitsSchema), mode: "onBlur" });
+  const { register, control, handleSubmit, reset, setError, watch, setValue, formState: { errors } } = useForm<CardLimitsValues>({ resolver: zodResolver(cardLimitsSchema), mode: "onBlur" });
   useEffect(() => {
     if (open) reset({ daily: pounds(card.limits.dailyLimitMinor), monthly: pounds(card.limits.monthlyLimitMinor), single: pounds(card.limits.singleTransactionLimitMinor), onlineEnabled: card.limits.onlineEnabled });
   }, [open, card.limits, reset]);
@@ -58,6 +59,8 @@ export function LimitsDialog({ card, open, onClose }: { card: Card; open: boolea
                 <span aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">£</span>
                 <Input id={`limit-${f.name}`} inputMode="decimal" autoComplete="off" className="num pl-8" aria-invalid={Boolean(errors[f.name])} aria-describedby={`limit-${f.name}-hint`} {...register(f.name)} />
               </div>
+              <LimitSlider label={f.label} value={Number(watch(f.name))} max={Math.round(f.max / 100)}
+                onChange={pounds => setValue(f.name, pounds.toFixed(2), { shouldDirty: true, shouldValidate: true })} />
               <p id={`limit-${f.name}-hint`} className={errors[f.name] ? "mt-1.5 text-[13px] font-medium" : "mt-1.5 text-xs text-muted-foreground"} role={errors[f.name] ? "alert" : undefined}>
                 {errors[f.name]?.message ?? `Maximum ${money(f.max)}`}
               </p>
