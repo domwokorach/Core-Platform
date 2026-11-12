@@ -1,0 +1,19 @@
+# Explicit local development profile. Never use these credentials in a real environment.
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/finix}
+    username: ${DB_USER:finix}
+    password: ${DB_PASSWORD:finix_dev_only}
+  flyway:
+    locations: classpath:db/migration,classpath:db/demo
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OIDC_ISSUER_URI:http://localhost:8081/realms/finix}
+app:
+  allowed-origin: ${APP_ALLOWED_ORIGIN:http://localhost:3000}
+  required-client-id: ${OIDC_CLIENT_ID:finix-web}
+  audience: ${OIDC_AUDIENCE:finix-api}
+  expose-prometheus: true
+  expose-api-docs: true
