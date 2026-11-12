@@ -56,7 +56,7 @@ jobs:
             type=raw,value=${{ inputs.version }}
             type=sha,format=short,prefix=sha-
       # Build locally first and scan, so a vulnerable image is never pushed.
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
           load: true
@@ -70,7 +70,7 @@ jobs:
           ignore-unfixed: true
           exit-code: '1'
       # The frontend image bakes in browser-public NEXT_PUBLIC_* URLs (defaults point at localhost); it contains no secrets.
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.context }}
           push: true
