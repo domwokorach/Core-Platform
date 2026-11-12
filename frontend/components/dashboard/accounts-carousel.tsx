@@ -14,7 +14,7 @@ export function AccountsCarousel({ data, loading }: { data?: Dashboard; loading?
     <div role="region" aria-label="Your accounts" tabIndex={0} className="scrollbar-none -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 xl:grid-cols-1 xl:gap-4 xl:pb-0">
       {data.accounts.map((a, i) => (
         <div key={a.id} className="w-[82%] shrink-0 snap-center sm:w-auto">
-          <AccountCard account={a} holder={data.customerName} variant={i % 2 ? "teal" : "navy"} type={a.displayName} />
+          <AccountCard account={a} holder={data.customerName} variant={i % 2 ? "teal" : "navy"} type={a.displayName} showBalance={false} />
         </div>
       ))}
     </div>

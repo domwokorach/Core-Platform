@@ -21,7 +21,7 @@ export default function AccountsPage() {
   return (
     <RevealGroup className="space-y-5">
       <RevealItem className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-        {accounts.map((a, i) => <AccountCard key={a.id} account={a} holder={holder} variant={i % 2 ? "teal" : "navy"} type={a.displayName} />)}
+        {accounts.map((a, i) => <AccountCard key={a.id} account={a} holder={holder} variant={i % 2 ? "teal" : "navy"} type={a.displayName} showBalance={false} />)}
       </RevealItem>
       <RevealItem>
         <Card>

@@ -6,18 +6,29 @@ import { LogoMark } from "@/components/layout/logo";
 import { getUserManager } from "@/lib/auth";
 import { safeRedirectPath } from "@/lib/auth-redirect";
 
+// An authorization code is single-use. React StrictMode runs effects twice in development, so the
+// exchange is memoised per page load: the second run reuses the first result instead of re-sending the code.
+let exchange: Promise<string> | undefined;
+function completeSignIn(): Promise<string> {
+  exchange ??= getUserManager().signinRedirectCallback().then(user => {
+    const state = user.state as { returnTo?: unknown } | undefined;
+    return safeRedirectPath(state?.returnTo);
+  });
+  return exchange;
+}
+
 export default function CallbackPage() {
   const [error, setError] = useState<string>();
   useEffect(() => {
     // Success is only reported once the code exchange and token validation have completed.
-    getUserManager().signinRedirectCallback()
-      .then(user => {
-        const state = user.state as { returnTo?: unknown } | undefined;
-        window.location.replace(safeRedirectPath(state?.returnTo));
-      })
-      .catch(() => {
+    completeSignIn()
+      .then(target => { try { sessionStorage.removeItem("finix.returnTo"); } catch { /* ignore */ } window.location.replace(target); })
+      .catch(e => {
         setError("We couldn't complete sign-in.");
-        window.location.replace("/login?error=callback");
+        const denied = (e as { error?: string })?.error === "access_denied";
+        // No matching state = the sign-in attempt it belonged to is gone (expired, or another tab/restart replaced it).
+        const stale = e instanceof Error && /no matching state/i.test(e.message);
+        window.location.replace(`/login?error=${denied ? "denied" : stale ? "timeout" : "callback"}`);
       });
   }, []);
   return (

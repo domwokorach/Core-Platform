@@ -19,6 +19,8 @@ interface Options {
   path?: string;
   /** Name of the invalidation event; defaults to `dashboard.updated`. */
   updatedEvent?: string;
+  /** Overrides `updatedEvent` when several event names are invalidation hints (e.g. every `card.*`). */
+  isUpdate?: (event: string) => boolean;
 }
 
 const MIN_DELAY_MS = 1_000;
@@ -63,7 +65,9 @@ export function openDashboardStream(options: Options): () => void {
           cache: "no-store",
           signal: controller.signal,
         });
-        if (res.status === 401 || res.status === 403) { options.onState("unauthorized"); return; }
+        if (res.status === 401) { options.onState("unauthorized"); return; }
+        // 403 = signed in but not authorised for live data: stop quietly (ending the session would just loop through SSO).
+        if (res.status === 403) { options.onState("offline"); return; }
         if (!res.ok || !res.body) throw new Error(`Stream refused (${res.status})`);
 
         let silenceMs = DEFAULT_HEARTBEAT_S * 2.5 * 1000;
@@ -77,7 +81,7 @@ export function openDashboardStream(options: Options): () => void {
             attempt = 0;
             options.onState("live");
             options.onReady();
-          } else if (message.event === (options.updatedEvent ?? "dashboard.updated")) {
+          } else if (options.isUpdate ? options.isUpdate(message.event) : message.event === (options.updatedEvent ?? "dashboard.updated")) {
             options.onUpdated();
           }
         }

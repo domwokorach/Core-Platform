@@ -10,7 +10,7 @@ export function BrandPanel() {
   const reduce = useReducedMotion();
   const rise = (delay: number) => reduce ? {} : { initial: { opacity: 0, y: 14 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5, ease, delay } };
   return (
-    <aside aria-label="About FINIX" className="relative hidden w-[46%] shrink-0 overflow-hidden bg-[#000000] text-white sm:flex sm:w-[40%] lg:w-[46%]">
+    <aside aria-label="About FINIX" className="relative hidden w-[46%] shrink-0 overflow-hidden bg-[#000000] text-white sm:flex sm:w-[40%] lg:w-1/2">
       {/* Grid texture */}
       <div aria-hidden className="absolute inset-0 opacity-[0.55] [background-image:linear-gradient(to_right,rgb(255_255_255/0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.06)_1px,transparent_1px)] [background-size:56px_56px] [mask-image:radial-gradient(80%_70%_at_30%_35%,#000,transparent)]" />
       {/* Monochrome highlights */}

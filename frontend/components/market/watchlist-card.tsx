@@ -6,12 +6,8 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { formatGBP, formatPrice, formatSigned, timeLondon } from "@/lib/utils/format";
 import { WATCHLIST, type FxInfo, type QuoteView, type SymbolError } from "@/types/market";
+import { CompanyLogo } from "@/components/investments/company-logo";
 import { DataClassBadge, MarketStatusBadge } from "./market-badges";
-
-/** Monogram tile: no logo service is licensed, so a neutral fallback is used. */
-export function Monogram({ symbol, className }: { symbol: string; className?: string }) {
-  return <span aria-hidden className={cn("grid size-11 shrink-0 place-items-center rounded-xl bg-primary text-xs font-bold tracking-wide text-primary-foreground", className)}>{symbol.slice(0, 2)}</span>;
-}
 
 export function ExternalStockLink({ name, url, className }: { name: string; url: string; className?: string }) {
   return (
@@ -44,7 +40,7 @@ export function WatchlistCard({ quote, error, fx, selected, onSelect }: { quote?
         <ExternalStockLink name={meta.name} url={quote?.externalUrl ?? meta.url} className="absolute right-3 top-3 z-10" />
         <button type="button" onClick={onSelect} aria-pressed={selected} aria-label={`Show ${meta.name} chart`} className="flex h-full w-full flex-col gap-4 rounded-xl p-5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <span className="flex items-center gap-3 pr-9">
-            <Monogram symbol={meta.symbol} />
+            <CompanyLogo symbol={meta.symbol} name={meta.name} size="lg" />
             <span className="min-w-0"><span className="block truncate text-sm font-semibold">{meta.name}</span><span className="block text-xs text-muted-foreground">{meta.symbol} · {meta.exchange}</span></span>
           </span>
 

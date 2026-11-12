@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "oidc-client-ts";
 import { getUserManager } from "@/lib/auth";
-import { safeRedirectPath } from "@/lib/auth-redirect";
+import { loginUrl } from "@/lib/auth-redirect";
 
 interface AuthValue {
   /** Valid, unexpired OIDC user, or null (demo mode). */
@@ -13,16 +13,23 @@ interface AuthValue {
   signOut: () => Promise<void>;
   /** Clears the local session (e.g. after a 401/403) without a redirect. */
   endSession: () => void;
+  /** Development-only demo session (signed server cookie, fixture data, no token). Always null in production builds. */
+  demo: { email: string; name: string } | null;
+  /** True once a session that existed has been terminated locally (expiry / rejected token). */
+  sessionEnded: boolean;
   getToken: () => string | null;
   authError: string | null;
 }
 
 const AuthContext = createContext<AuthValue | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children, demoAvailable = false }: { children: React.ReactNode; demoAvailable?: boolean }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [sessionEnded, setSessionEnded] = useState(false);
+  const [demo, setDemo] = useState<{ email: string; name: string } | null>(null);
+  const [demoChecked, setDemoChecked] = useState(!demoAvailable);
   const ref = useRef<User | null>(null);
   ref.current = user;
 
@@ -35,28 +42,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => { canceled = true; };
   }, []);
 
+  // Every system-initiated end (expiry, rejected token, failed renewal) is flagged so sign-in is not restarted automatically.
+  // Only asked when the server says demo sign-in exists (development + explicit opt-in), so production never calls it.
+  useEffect(() => {
+    if (!demoAvailable) return;
+    let canceled = false;
+    fetch("/api/demo/session", { cache: "no-store", credentials: "same-origin" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(v => { if (!canceled && v && typeof v.email === "string") setDemo(v); })
+      .catch(() => undefined)
+      .finally(() => { if (!canceled) setDemoChecked(true); });
+    return () => { canceled = true; };
+  }, [demoAvailable]);
+
   const endSession = useCallback(() => {
     getUserManager().removeUser().catch(() => undefined);
+    setSessionEnded(true);
     setUser(null);
   }, []);
 
-  // Sign out locally the moment the access token expires.
+  // Refresh-token renewal replaces the user; a failed renewal means the SSO session is over.
   useEffect(() => {
-    if (!user?.expires_at) return;
-    const timer = setTimeout(endSession, Math.max(0, user.expires_at * 1000 - Date.now()));
-    return () => clearTimeout(timer);
-  }, [user, endSession]);
+    const events = getUserManager().events;
+    const loaded = (u: User) => setUser(u);
+    const failed = () => endSession();
+    events.addUserLoaded(loaded);
+    events.addSilentRenewError(failed);
+    events.addAccessTokenExpired(failed);
+    return () => { events.removeUserLoaded(loaded); events.removeSilentRenewError(failed); events.removeAccessTokenExpired(failed); };
+  }, [endSession]);
 
   const value = useMemo<AuthValue>(() => ({
-    user, loading, authError, endSession,
+    user, demo, loading: loading || !demoChecked, authError, endSession, sessionEnded,
     getToken: () => (ref.current && !ref.current.expired ? ref.current.access_token : null),
     // Sends the user to the FINIX sign-in screen, remembering where they were.
     signIn: async () => {
-      const here = safeRedirectPath(window.location.pathname + window.location.search);
-      window.location.assign(here === "/" ? "/login" : `/login?returnTo=${encodeURIComponent(here)}`);
+      window.location.assign(loginUrl(window.location.pathname + window.location.search));
     },
-    signOut: async () => { await getUserManager().signoutRedirect().catch(endSession); },
-  }), [user, loading, authError, endSession]);
+    signOut: async () => {
+      if (ref.current === null && demo) {
+        await fetch("/api/demo/logout", { method: "POST", credentials: "same-origin" }).catch(() => undefined);
+        // navigate away without clearing React state first, so the route guard cannot race this redirect
+        window.location.assign("/login?signedOut=1");
+        return;
+      }
+      await getUserManager().signoutRedirect().catch(endSession);
+    },
+  }), [user, demo, loading, demoChecked, authError, endSession, sessionEnded]);
 
   return <AuthContext value={value}>{children}</AuthContext>;
 }

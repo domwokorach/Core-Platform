@@ -15,7 +15,8 @@ import { useHistory, useMarketStream, useQuotes } from "@/hooks/use-market";
 import { dateTimeLondon } from "@/lib/utils/format";
 import { useAuth } from "@/providers/auth-provider";
 import { WATCHLIST, type HistoryRange } from "@/types/market";
-import { ExternalStockLink, Monogram, WatchlistCard } from "./watchlist-card";
+import { CompanyLogo } from "@/components/investments/company-logo";
+import { ExternalStockLink, WatchlistCard } from "./watchlist-card";
 
 const StockChart = dynamic(() => import("./stock-chart"), { ssr: false, loading: () => <Skeleton className="h-[300px] w-full" /> });
 const RANGES: HistoryRange[] = ["1D", "1W", "1M", "3M", "1Y"];
@@ -78,7 +79,7 @@ export function MarketSection() {
       <RevealItem>
         <Card>
           <CardHeader className="flex-wrap">
-            <div className="flex min-w-0 items-center gap-3"><Monogram symbol={meta.symbol} className="size-10" /><div><CardTitle>{meta.name} <span className="font-normal text-muted-foreground">{meta.symbol}</span></CardTitle><CardDescription>Price in {currency} (native quote currency){history.data?.stale ? " · last saved data" : ""}</CardDescription></div></div>
+            <div className="flex min-w-0 items-center gap-3"><CompanyLogo symbol={meta.symbol} name={meta.name} /><div><CardTitle>{meta.name} <span className="font-normal text-muted-foreground">{meta.symbol}</span></CardTitle><CardDescription>Price in {currency} (native quote currency){history.data?.stale ? " · last saved data" : ""}</CardDescription></div></div>
             <div className="flex items-center gap-1.5">
               <ExternalStockLink name={meta.name} url={meta.url} />
               <RangeSelector value={range} onChange={setRange} />

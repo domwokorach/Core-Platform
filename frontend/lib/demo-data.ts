@@ -1,4 +1,5 @@
 import type { Dashboard, TransferReceipt } from "@/types/banking";
+import type { Card, CardActivity, CardTransaction } from "@/types/cards";
 
 // Fixed 09:41 UTC today so server and client render identical demo timestamps (avoids hydration mismatch).
 const now = new Date(new Date().setUTCHours(9, 41, 0, 0));
@@ -8,7 +9,7 @@ const B = "22222222-2222-4222-8222-222222222222";
 
 /** Fictional sample data shown ONLY while signed out, and always labelled as a demo in the UI. */
 export const demoDashboard: Dashboard = {
-  customerName: "Alex Morgan",
+  customerName: "Demo User",
   accounts: [
     { id: A, displayName: "Everyday account", maskedNumber: "•••• 4568", currency: "GBP", balanceMinor: 455615, brand: "MASTERCARD" },
     { id: B, displayName: "Savings account", maskedNumber: "•••• 0958", currency: "GBP", balanceMinor: 596800, brand: "VISA" },
@@ -38,4 +39,27 @@ export const goals = [
   { id: "g2", label: "Emergency fund", current: 750000, target: 1000000, color: "var(--savings)" },
   { id: "g3", label: "Summer travel", current: 90000, target: 400000, color: "var(--savings)" },
   { id: "g4", label: "Home deposit", current: 1200000, target: 6000000, color: "var(--savings)" },
+];
+
+/** Fictional sandbox cards shown only while signed out. They mirror the dev seed. */
+export const demoCards: Card[] = [
+  { id: "c1111111-1111-4111-8111-111111111111", cardType: "EVERYDAY", status: "ACTIVE", maskedReference: "FVC •••• 7Q3K", currency: "GBP", cardholderName: "Demo User",
+    linkedAccount: { id: A, displayName: "Everyday account", maskedNumber: "•••• 4568" },
+    limits: { dailyLimitMinor: 50000, monthlyLimitMinor: 300000, singleTransactionLimitMinor: 25000, onlineEnabled: true },
+    spending: { dailySpentMinor: 1499, monthlySpentMinor: 12499 }, createdAt: day(20), activatedAt: day(20), updatedAt: day(20) },
+  { id: "c2222222-2222-4222-8222-222222222222", cardType: "SAVINGS", status: "PENDING_ACTIVATION", maskedReference: "FVC •••• 4M9X", currency: "GBP", cardholderName: "Demo User",
+    linkedAccount: { id: B, displayName: "Savings account", maskedNumber: "•••• 0958" },
+    limits: { dailyLimitMinor: 50000, monthlyLimitMinor: 300000, singleTransactionLimitMinor: 25000, onlineEnabled: true },
+    spending: { dailySpentMinor: 0, monthlySpentMinor: 0 }, createdAt: day(1), activatedAt: null, updatedAt: day(1) },
+];
+const dc = demoCards[0]!.id;
+export const demoCardTransactions: CardTransaction[] = [
+  { id: "ct1", cardId: dc, merchantName: "Starbucks Coffee", amountMinor: 1499, currency: "GBP", channel: "IN_STORE", outcome: "APPROVED", declineReason: null, occurredAt: day(1) },
+  { id: "ct2", cardId: dc, merchantName: "DKNY", amountMinor: 4000, currency: "GBP", channel: "IN_STORE", outcome: "APPROVED", declineReason: null, occurredAt: day(2) },
+  { id: "ct3", cardId: dc, merchantName: "Netflix", amountMinor: 7000, currency: "GBP", channel: "ONLINE", outcome: "APPROVED", declineReason: null, occurredAt: day(3) },
+  { id: "ct4", cardId: dc, merchantName: "Electronics Outlet", amountMinor: 32000, currency: "GBP", channel: "ONLINE", outcome: "DECLINED", declineReason: "SINGLE_LIMIT_EXCEEDED", occurredAt: day(6) },
+];
+export const demoCardActivity: CardActivity[] = [
+  { id: "ca1", cardId: dc, eventType: "CARD_ACTIVATED", occurredAt: day(20) },
+  { id: "ca2", cardId: dc, eventType: "CARD_CREATED", occurredAt: day(20) },
 ];

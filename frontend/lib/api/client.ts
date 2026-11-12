@@ -1,4 +1,5 @@
 import type { Account, Dashboard, Transaction, TransferReceipt } from "@/types/banking";
+import type { Card, CardActivity, CardLimits, CardTransaction, CardType } from "@/types/cards";
 
 export const apiRoot = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
@@ -41,3 +42,22 @@ export const createTransfer = (token: string, payload: TransferPayload, idempote
     headers: { "Idempotency-Key": idempotencyKey },
     body: JSON.stringify(payload),
   });
+
+// ---- Sandbox cards -------------------------------------------------------------------------------------------
+
+export const getCards = (token: string) => request<Card[]>("/api/cards", token);
+export const getCardTransactions = (token: string, id: string) => request<CardTransaction[]>(`/api/cards/${id}/transactions`, token);
+export const getCardActivity = (token: string, id: string) => request<CardActivity[]>(`/api/cards/${id}/activity`, token);
+
+export const createCard = (token: string, payload: { accountId: string; cardType: CardType }, idempotencyKey: string) =>
+  request<Card>("/api/cards", token, { method: "POST", headers: { "Idempotency-Key": idempotencyKey }, body: JSON.stringify(payload) });
+
+export type CardCommand = "activate" | "freeze" | "unfreeze";
+export const runCardCommand = (token: string, id: string, command: CardCommand) =>
+  request<Card>(`/api/cards/${id}/${command}`, token, { method: "POST" });
+
+export const updateCardLimits = (token: string, id: string, limits: Partial<CardLimits>) =>
+  request<Card>(`/api/cards/${id}/limits`, token, { method: "PATCH", body: JSON.stringify(limits) });
+
+export const simulateCardAuthorization = (token: string, id: string, payload: { merchantName: string; amountMinor: number; channel: "ONLINE" | "IN_STORE" }) =>
+  request<CardTransaction>(`/api/cards/${id}/sandbox-authorizations`, token, { method: "POST", body: JSON.stringify(payload) });

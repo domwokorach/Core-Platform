@@ -24,7 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <TooltipProvider>
-      <MotionConfig transition={{ duration: 0.28, ease }}>
+      <MotionConfig reducedMotion="user" transition={{ duration: 0.28, ease }}>
         <a href="#main" className="sr-only z-50 rounded-lg bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4">Skip to content</a>
         {/* Desktop persistent sidebar */}
         <motion.div

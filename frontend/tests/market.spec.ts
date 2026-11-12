@@ -223,3 +223,59 @@ test("signed out: no prices are shown, only a sign-in prompt", async ({ page }) 
   await expect(page.locator("body")).not.toContainText("US$");
   await expect(page.locator("body")).not.toContainText("AAPL");
 });
+
+const LOGO_PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64");
+const DOMAINS = { AAPL: "apple.com", MSFT: "microsoft.com", NVDA: "nvidia.com", NFLX: "netflix.com" } as const;
+
+test.describe("stock logos (Logo.dev, brand imagery only)", () => {
+  test.beforeEach(async ({ context }) => { await signIn(context); });
+
+  test("each ticker loads its own verified domain and quotes still come from the FINIX market API", async ({ page }) => {
+    const m = healthy(); await mockApi(page, m);
+    const logos: string[] = [];
+    await page.route("https://img.logo.dev/**", route => { logos.push(route.request().url()); return route.fulfill({ status: 200, contentType: "image/png", body: LOGO_PNG }); });
+    await page.goto("/investments");
+    for (const [sym, domain] of Object.entries(DOMAINS)) {
+      const tile = page.locator(`[data-stock-logo="${sym}"]`).first();
+      await expect(tile).toHaveAttribute("data-logo-status", "loaded");
+      await expect(tile.locator("img")).toHaveAttribute("src", new RegExp(`^https://img\\.logo\\.dev/${domain.replace(".", "\\.")}\\?.*fallback=404`));
+      await expect(tile.locator("img")).toHaveClass(/object-contain/);
+    }
+    expect(logos.some(u => u.includes("sk_"))).toBe(false);
+    expect(logos.every(u => !/AAPL|price|200\.00/.test(u))).toBe(true);   // no market data leaks to Logo.dev
+    await expect(page.getByRole("article", { name: /Apple/ })).toContainText("US$200.00");
+    expect(m.requests.some(r => r.includes("/api/market/quotes"))).toBe(true);
+  });
+
+  test("failed logo requests (404, 429, offline) fall back to a neutral icon and never block quotes", async ({ page }) => {
+    await mockApi(page, healthy());
+    await page.route("https://img.logo.dev/**", route => {
+      const d = new URL(route.request().url()).pathname.slice(1);
+      if (d === "apple.com") return route.fulfill({ status: 404, body: "{}" });
+      if (d === "microsoft.com") return route.fulfill({ status: 429, body: "{}" });
+      if (d === "nvidia.com") return route.abort("failed");
+      return route.fulfill({ status: 200, contentType: "image/png", body: LOGO_PNG });
+    });
+    await page.goto("/investments");
+    for (const s of ["AAPL", "MSFT", "NVDA"]) {
+      const tile = page.locator(`[data-stock-logo="${s}"]`).first();
+      await expect(tile).toHaveAttribute("data-logo-status", "error");
+      await expect(tile.locator("img")).toHaveCount(0);
+      await expect(tile.locator("svg")).toBeVisible();
+    }
+    await expect(page.locator(`[data-stock-logo="NFLX"]`).first()).toHaveAttribute("data-logo-status", "loaded");
+    await expect(page.getByRole("article", { name: /Apple/ })).toContainText("US$200.00");
+    await expect(page.getByRole("article", { name: /Apple/ })).toContainText("AAPL");
+  });
+
+  test("dashboard watchlist shows logos, USD prices, Delayed label and links to /investments", async ({ page }) => {
+    await mockApi(page, healthy());
+    await page.route("https://img.logo.dev/**", route => route.fulfill({ status: 200, contentType: "image/png", body: LOGO_PNG }));
+    await page.goto("/");
+    await expect(page.getByText("US stocks · Native USD prices")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Open/ }).first()).toHaveAttribute("href", "/investments");
+    await expect(page.locator(`[data-stock-logo]`)).toHaveCount(4);
+    await expect(page.locator("body")).toContainText("US$200.00");
+    await expect(page.getByText("Delayed", { exact: true }).first()).toBeVisible();
+  });
+});

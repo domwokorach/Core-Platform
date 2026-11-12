@@ -20,14 +20,14 @@ import { useEffect, useRef, useState } from "react";
 export function Header({ onMenu }: { onMenu: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, demo } = useAuth();
   const { data } = useDashboard();
   const { search, setSearch } = useFilters();
   const searchRef = useRef<HTMLInputElement>(null);
   const [hello, setHello] = useState("Welcome");
   useEffect(() => setHello(greeting()), []);
   const page = NAV.find(n => isActive(pathname, n.href));
-  const first = user ? data?.customerName.split(" ")[0] : undefined;
+  const first = user ? data?.customerName.split(" ")[0] : demo ? demo.name.split(" ")[0] : undefined;
 
   // ⌘K / Ctrl+K focuses search
   useEffect(() => {

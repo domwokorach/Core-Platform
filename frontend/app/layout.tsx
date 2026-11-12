@@ -5,12 +5,14 @@ import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { AuthProvider } from "@/providers/auth-provider";
+import { isDemoAuthEnabled } from "@/lib/server/demo-auth";
 import { LiveProvider } from "@/providers/live-provider";
 import { FiltersProvider } from "@/providers/filters-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
-  title: "FINIX | Core banking",
+  title: "FINIX — Core Banking",
+  icons: { icon: [{ url: "/finix-icon.svg", type: "image/svg+xml" }] },
   description: "Ledger-backed banking dashboard with secure internal transfers.",
 };
 
@@ -27,7 +29,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <ThemeProvider>
           <QueryProvider>
-            <AuthProvider>
+            <AuthProvider demoAvailable={isDemoAuthEnabled()}>
               <LiveProvider>
                 <FiltersProvider>
                   {children}

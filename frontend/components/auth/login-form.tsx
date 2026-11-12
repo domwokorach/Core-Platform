@@ -1,132 +1,130 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowRight, Info, Loader2, Lock } from "lucide-react";
+import { Loader2, Lock, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AuthError, type AuthErrorKey, AUTH_ERRORS } from "@/components/auth/auth-error";
 import { LogoMark } from "@/components/layout/logo";
+import { DemoSignInForm, DevDemoBadge } from "@/components/auth/demo-sign-in-form";
 import { useAuth } from "@/providers/auth-provider";
-import { getUserManager } from "@/lib/auth";
+import { getRegistrationManager, getUserManager } from "@/lib/auth";
 import { safeRedirectPath } from "@/lib/auth-redirect";
-import { loginSchema, type LoginValues } from "@/lib/schemas";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-export function LoginForm({ returnTo, initialError }: { returnTo?: string; initialError?: string }) {
+/**
+ * FINIX holds no credential form. This route immediately starts Authorization Code + PKCE with Keycloak,
+ * which renders the one (FINIX-themed) credential screen. Auto-start is skipped when we arrive with an
+ * error or after sign-out, so a failing sign-in can never bounce between the two sites.
+ */
+export function LoginForm({ returnTo, initialError, signedOut, loginHint, register, demoEnabled }: { returnTo?: string; initialError?: string; signedOut?: boolean; loginHint?: string; register?: boolean; demoEnabled?: boolean }) {
   const router = useRouter();
   const reduce = useReducedMotion();
-  const { user, loading } = useAuth();
-  const destination = safeRedirectPath(returnTo);
+  const { user, demo, loading } = useAuth();
+  // Server-decided (development + explicit opt-in). Keycloak sign-in stays available from the same page.
+  const demoMode = Boolean(demoEnabled) && !register;
+  // Keycloak cannot carry returnTo back after an expired attempt, so it is also kept (validated) for this tab only.
+  const [stored, setStored] = useState<string>();
+  useEffect(() => { try { setStored(sessionStorage.getItem("finix.returnTo") ?? undefined); } catch { /* storage unavailable */ } }, []);
+  const destination = safeRedirectPath(returnTo ?? stored);
   const [error, setError] = useState<AuthErrorKey | null>(initialError && initialError in AUTH_ERRORS ? (initialError as AuthErrorKey) : null);
   const [redirecting, setRedirecting] = useState(false);
-  const submitting = useRef(false);
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginValues>({
-    resolver: zodResolver(loginSchema), defaultValues: { identifier: "" }, mode: "onTouched",
-  });
+  const started = useRef(false);
+  const noun = register ? "Create your FINIX account" : "Sign in to your account";
+  const manual = Boolean(error) || Boolean(signedOut) || demoMode;
 
-  // Already authenticated: go straight to the intended destination.
-  useEffect(() => {
-    if (!loading && user) { setRedirecting(true); router.replace(destination); }
-  }, [loading, user, destination, router]);
-
-  async function onSubmit({ identifier }: LoginValues) {
-    if (submitting.current) return; // guard against double submits
-    submitting.current = true;
+  const start = useCallback(async () => {
+    if (started.current) return; // StrictMode / double-click guard: one authorization request per attempt
+    started.current = true;
     setError(null);
     setRedirecting(true);
+    try { sessionStorage.setItem("finix.returnTo", destination); } catch { /* storage unavailable */ }
     try {
-      // Authorization Code + PKCE. Credentials are entered only on the identity provider.
-      await getUserManager().signinRedirect({
-        state: { returnTo: destination },
-        login_hint: identifier,
-      });
+      // `state` and the PKCE verifier/challenge are generated fresh by the library for every attempt; the nonce is bound to the
+      // stored request and checked against the ID token on callback.
+      const nonce = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(24)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      await (register ? getRegistrationManager() : getUserManager()).signinRedirect({ state: { returnTo: destination }, nonce, login_hint: loginHint?.slice(0, 254) || undefined });
     } catch {
-      submitting.current = false;
+      started.current = false;
       setRedirecting(false);
       setError("unavailable");
     }
-  }
+  }, [destination, loginHint]);
+
+  // OIDC state lives in per-origin sessionStorage and the callback URI is registered for one origin,
+  // so sign-in must start on the configured app origin (not 127.0.0.1 or a LAN address).
+  useEffect(() => {
+    const canonical = process.env.NEXT_PUBLIC_APP_ORIGIN;
+    if (canonical && canonical !== window.location.origin) window.location.replace(`${canonical}/login${window.location.search}`);
+  }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    if (user || demo) { started.current = true; setRedirecting(true); router.replace(destination); return; }
+    const canonical = process.env.NEXT_PUBLIC_APP_ORIGIN;
+    if (canonical && canonical !== window.location.origin) return;
+    if (!manual) void start();
+  }, [loading, user, demo, manual, destination, router, start]);
 
   const enter = reduce ? {} : { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.35, ease } };
-  const busy = redirecting;
-  const idError = errors.identifier?.message;
 
   return (
     <div className="flex flex-1 flex-col px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-8">
-      <div className="flex items-center justify-between sm:hidden">
-        <motion.span {...(reduce ? {} : { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.3 } })} className="flex items-center gap-2.5">
-          <LogoMark className="size-9" /><span className="text-xl font-semibold tracking-[-0.03em]">FINIX</span>
-        </motion.span>
-      </div>
-
       <div className="flex flex-1 items-center justify-center py-8 sm:py-12">
         <motion.div {...enter} className="w-full max-w-[420px]">
-          <p className="mb-3 hidden items-center gap-2 text-[13px] font-medium text-muted-foreground sm:flex"><LogoMark className="size-5" />Welcome back</p>
-          <p className="mb-2 text-[13px] font-medium text-muted-foreground sm:hidden">Welcome back</p>
-          <h1 className="text-balance text-[1.75rem] font-semibold leading-tight tracking-[-0.03em] sm:text-[2rem]">Sign in to your account</h1>
-          <p className="mt-2.5 text-pretty text-[15px] leading-relaxed text-muted-foreground">
-            Welcome back to FINIX. Enter your details to securely access your banking dashboard.
+          <LogoMark className="size-10" />
+          {error === "timeout" ? (
+            <div role="alert" className="mt-6 rounded-3xl border bg-card p-7 shadow-card">
+              <span className="grid size-12 place-items-center rounded-2xl bg-muted"><TriangleAlert className="size-6" aria-hidden /></span>
+              <h1 className="mt-5 text-[26px] font-semibold leading-tight tracking-[-0.03em]">{AUTH_ERRORS.timeout.title}</h1>
+              <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">{AUTH_ERRORS.timeout.body}</p>
+              <Button type="button" size="lg" disabled={redirecting} onClick={() => void start()} className="mt-6 h-[52px] w-full rounded-xl text-base">
+                {redirecting ? <><Loader2 className="animate-spin" aria-hidden />Redirecting…</> : "Try signing in again"}
+              </Button>
+              <Link href="/" className="mt-3 flex min-h-11 items-center justify-center text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">Back to FINIX</Link>
+            </div>
+          ) : (<>
+          <h1 className="mt-6 text-[28px] font-semibold leading-tight tracking-[-0.03em]">
+            {signedOut && !error ? "You've been signed out" : manual ? noun : register ? "Taking you to secure registration" : "Taking you to secure sign-in"}
+          </h1>
+          <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
+            {signedOut && !error ? "Your FINIX session has ended on this device." : "Welcome back to FINIX. Securely access all your banking services with one account."}
           </p>
 
-          <div className="mt-8">
+          <div className="mt-7">
             <AuthError error={error} />
-            {loading ? (
-              <div className="space-y-5" aria-busy="true" aria-label="Loading sign-in form">
-                <div className="space-y-2"><Skeleton className="h-4 w-40" /><Skeleton className="h-12 w-full rounded-xl" /></div>
-                <Skeleton className="h-[52px] w-full rounded-xl" />
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5" aria-busy={busy}>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="identifier" className="text-sm">Email address or username</Label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button type="button" aria-label="Why am I not asked for a password here?" className="grid size-6 place-items-center rounded-full text-muted-foreground transition-colors hover:text-foreground">
-                            <Info className="size-4" aria-hidden />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-60 text-pretty">For your security, your password is entered on our secure sign-in service, never on this page.</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <Input
-                    id="identifier" type="text" inputMode="email" autoComplete="username webauthn" autoCapitalize="none" autoCorrect="off" spellCheck={false}
-                    autoFocus placeholder="Enter your email or username" disabled={busy}
-                    aria-invalid={!!idError} aria-describedby={idError ? "identifier-error" : undefined}
-                    className="h-12 rounded-xl text-base sm:h-12 sm:text-base"
-                    {...register("identifier")}
-                  />
-                  <div aria-live="polite">
-                    {idError && <motion.p id="identifier-error" initial={reduce ? false : { opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="text-[13px] font-medium text-foreground">{idError}</motion.p>}
-                  </div>
-                </div>
-
-                <Button type="submit" size="lg" disabled={busy} aria-disabled={busy} className="h-[52px] w-full rounded-xl text-base transition-[background-color,box-shadow,transform] duration-150 hover:shadow-lift">
-                  {busy ? <><Loader2 className="animate-spin" aria-hidden />Signing you in...</> : <>Sign in securely<ArrowRight aria-hidden /></>}
+            {demoMode ? (
+              <>
+                <DevDemoBadge />
+                <DemoSignInForm onSuccess={() => { started.current = true; setRedirecting(true); window.location.assign(returnTo ? destination : "/dashboard"); }} />
+                <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground" aria-hidden><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>
+                <Button type="button" variant="outline" size="lg" disabled={redirecting} onClick={() => void start()} className="h-[52px] w-full rounded-xl text-base">
+                  {redirecting ? <><Loader2 className="animate-spin" aria-hidden />Redirecting…</> : "Continue with secure sign-in"}
                 </Button>
-                <p role="status" className="sr-only">{busy ? "Signing you in. Redirecting to secure sign-in." : ""}</p>
-              </form>
+              </>
+            ) : manual ? (
+              <Button type="button" size="lg" disabled={redirecting} onClick={() => void start()} className="h-[52px] w-full rounded-xl text-base">
+                {redirecting ? <><Loader2 className="animate-spin" aria-hidden />Redirecting…</> : error ? "Try again" : register ? "Create account" : "Sign in"}
+              </Button>
+            ) : (
+              <div role="status" aria-live="polite" className="flex items-center gap-3 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" aria-hidden />Redirecting to secure sign-in…
+              </div>
             )}
           </div>
 
-          <p className="mt-6 flex items-center gap-2 text-[13px] text-muted-foreground"><Lock className="size-3.5 shrink-0" aria-hidden />Protected by secure authentication.</p>
+          </>)}
+          {!demoMode && <p className="mt-6 flex items-center gap-2 text-[13px] text-muted-foreground"><Lock className="size-3.5 shrink-0" aria-hidden />You enter your password only on FINIX&apos;s secure sign-in page.</p>}
         </motion.div>
       </div>
 
-      <footer className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-[13px] text-muted-foreground">
+      <footer aria-label="Legal information" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-[13px] text-muted-foreground">
         <span>© {new Date().getFullYear()} FINIX</span>
-        <a href="/privacy" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-foreground hover:underline">Privacy Policy</a>
-        <a href="/terms" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-foreground hover:underline">Terms of Service</a>
+        <Link href="/privacy" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-foreground hover:underline">Privacy Policy</Link>
+        <Link href="/terms" className="inline-flex min-h-11 items-center underline-offset-4 hover:text-foreground hover:underline">Terms of Service</Link>
       </footer>
     </div>
   );

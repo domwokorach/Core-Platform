@@ -211,6 +211,17 @@
     radial-gradient(110% 90% at 0% 100%, rgb(255 255 255 / 0.14), transparent 55%),
     linear-gradient(145deg, #262626 0%, #404040 100%);
 }
+/* Sandbox virtual cards: matte black + white/graphite finish (grey only). */
+.card-matte {
+  background:
+    radial-gradient(120% 100% at 100% 0%, rgb(255 255 255 / 0.10), transparent 55%),
+    linear-gradient(150deg, #0a0a0a 0%, #1f1f1f 55%, #2b2b2b 100%);
+}
+.card-pearl {
+  background:
+    radial-gradient(120% 100% at 0% 0%, rgb(255 255 255 / 0.9), transparent 60%),
+    linear-gradient(150deg, #fafafa 0%, #e5e5e5 100%);
+}
 .hero-balance {
   background:
     radial-gradient(90% 120% at 100% 0%, rgb(255 255 255 / 0.12), transparent 55%),

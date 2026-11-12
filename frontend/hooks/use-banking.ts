@@ -7,7 +7,7 @@ import { demoDashboard, demoTransfers } from "@/lib/demo-data";
 import { useAuth } from "@/providers/auth-provider";
 
 /** Shared auth-aware query wrapper. Signed out → fictional demo data (flagged `isDemo`), never presented as live. */
-function useBankingQuery<T>(key: string, fetcher: (token: string) => Promise<T>, demo: T) {
+export function useBankingQuery<T>(key: string, fetcher: (token: string) => Promise<T>, demo: T) {
   const { user, loading: authLoading, getToken, endSession } = useAuth();
   const sub = user?.profile.sub;
   const query = useQuery({
@@ -20,7 +20,9 @@ function useBankingQuery<T>(key: string, fetcher: (token: string) => Promise<T>,
     },
   });
   useEffect(() => {
-    if (query.error instanceof ApiError && [401, 403].includes(query.error.status)) endSession();
+    // 401: the API rejected our token, so the session is over. 403 (not authorised) must NOT sign out:
+    // silent SSO would just sign the same user straight back in and loop.
+    if (query.error instanceof ApiError && query.error.status === 401) endSession();
   }, [query.error, endSession]);
   // Demo data only once we KNOW nobody is signed in; while the session is being restored show loading state, never fake balances.
   const isDemo = !user && !authLoading;
