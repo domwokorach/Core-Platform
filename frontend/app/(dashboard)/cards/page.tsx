@@ -8,9 +8,8 @@ import { EmptyState } from "@/components/banking/empty-state";
 import { ErrorState } from "@/components/banking/error-state";
 import { CardManager } from "@/components/cards/card-manager";
 import { CreateCardDialog } from "@/components/cards/create-card-dialog";
-import { CardCarousel } from "@/components/cards/card-carousel";
+import { CardCarousel, PENDING } from "@/components/cards/card-carousel";
 import { CardTypeTabs } from "@/components/cards/card-type-tabs";
-import { CardDesignGallery } from "@/components/cards/card-design-gallery";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAccounts } from "@/hooks/use-banking";
@@ -24,10 +23,13 @@ export default function CardsPage() {
   const { data: accounts = [] } = useAccounts();
   const [selectedId, setSelectedId] = useState<string>();
   const [creating, setCreating] = useState(false);
-  const selected = cards.find(c => c.id === selectedId) ?? cards[0];
+  const [createFor, setCreateFor] = useState<string>();
+  const missing = accounts.filter(a => !cards.some(c => c.linkedAccount.id === a.id));
+  const pendingAccount = selectedId?.startsWith(PENDING) ? missing.find(a => PENDING + a.id === selectedId) : undefined;
+  const selected = pendingAccount ? undefined : cards.find(c => c.id === selectedId) ?? cards[0];
 
-  const create = () => { if (!user) { toast.info("Sign in to create sandbox cards."); return; } setCreating(true); };
-  const createButton = <Button onClick={create} className="max-sm:h-12 max-sm:w-full"><Plus />Create Virtual Card</Button>;
+  const create = (accountId?: string) => { if (!user) { toast.info("Sign in to create sandbox cards."); return; } setCreateFor(accountId); setCreating(true); };
+  const createButton = <Button onClick={() => create()} className="max-sm:h-12 max-sm:w-full"><Plus />Create Virtual Card</Button>;
 
   if (error) return <ErrorState message={error.message} onRetry={() => void refetch()} retrying={isFetching} />;
 
@@ -49,15 +51,14 @@ export default function CardsPage() {
         <>
           <RevealItem>
             <CardTypeTabs cards={cards} selected={selected} onSelect={setSelectedId} />
-            <CardCarousel cards={cards} selectedId={selected?.id} onSelect={setSelectedId} />
+            <CardCarousel cards={cards} selectedId={pendingAccount ? selectedId : selected?.id} onSelect={setSelectedId} missing={missing} onCreate={create} />
           </RevealItem>
           {selected && <RevealItem key={selected.id}><CardManager card={selected} /></RevealItem>}
+          {pendingAccount && <RevealItem key={pendingAccount.id}><EmptyState icon={CreditCard} title={`No card for ${pendingAccount.displayName} yet`} description="Create a sandbox card linked to this account to use card controls, limits and activity." action={<Button onClick={() => create(pendingAccount.id)}><Plus />Create virtual card</Button>} /></RevealItem>}
         </>
       )}
 
-      <CardDesignGallery />
-
-      <CreateCardDialog open={creating} onClose={() => setCreating(false)} accounts={accounts} onCreated={c => setSelectedId(c.id)} />
+      <CreateCardDialog open={creating} onClose={() => setCreating(false)} accounts={accounts} defaultAccountId={createFor} onCreated={c => setSelectedId(c.id)} />
     </RevealGroup>
   );
 }

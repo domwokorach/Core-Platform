@@ -7,20 +7,28 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CARD_STATUS, CardStatusBadge } from "./card-status";
+import type { Account } from "@/types/banking";
 import type { Card } from "@/types/cards";
 
 /** The supplied FINIX Visa artwork, shown whole (never cropped or stretched). Everyday → Black, Savings → Silver. */
+export const PENDING = "acct:";
 const ART = {
   EVERYDAY: { name: "FINIX Black Visa", src: "/cards/finix-visa-black.png", width: 1448, height: 1086 },
   SAVINGS: { name: "FINIX Silver Visa", src: "/cards/finix-visa-silver-cutout.png", width: 1447, height: 1087 },
 } as const;
 
 /** Swipeable, scroll-snapping carousel. Native scrolling handles touch; the slide nearest the centre becomes the selection. */
-export function CardCarousel({ cards, selectedId, onSelect }: { cards: Card[]; selectedId?: string; onSelect: (id: string) => void }) {
+export function CardCarousel({ cards, selectedId, onSelect, missing = [], onCreate }: {
+  cards: Card[]; selectedId?: string; onSelect: (id: string) => void;
+  /** Accounts that have no card yet: each gets its own slide with a create action, so no account is left out. */
+  missing?: Account[]; onCreate?: (accountId: string) => void;
+}) {
   const reduce = useReducedMotion();
   const track = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const index = Math.max(0, cards.findIndex(c => c.id === selectedId));
+  const total = cards.length + missing.length;
+  const idAt = (i: number) => i < cards.length ? cards[i].id : `${PENDING}${missing[i - cards.length]?.id}`;
+  const index = Math.max(0, Array.from({ length: total }, (_, i) => idAt(i)).indexOf(selectedId ?? ""));
 
   const slides = () => Array.from(track.current?.children ?? []) as HTMLElement[];
   const goTo = useCallback((i: number, smooth = true) => {
@@ -40,7 +48,7 @@ export function CardCarousel({ cards, selectedId, onSelect }: { cards: Card[]; s
       const mid = t.scrollLeft + t.clientWidth / 2;
       let best = 0, dist = Infinity;
       slides().forEach((el, i) => { const d = Math.abs(el.offsetLeft + el.clientWidth / 2 - mid); if (d < dist) { dist = d; best = i; } });
-      if (cards[best] && cards[best].id !== selectedId) onSelect(cards[best].id);
+      if (best < total && idAt(best) !== selectedId) onSelect(idAt(best));
     }, 90);
   };
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -54,7 +62,7 @@ export function CardCarousel({ cards, selectedId, onSelect }: { cards: Card[]; s
   };
   const glareLeave = (e: React.PointerEvent<HTMLElement>) => { const g = e.currentTarget.querySelector<HTMLElement>("[data-glare]"); if (g) g.style.opacity = "0"; };
 
-  const step = (d: number) => { const i = Math.min(cards.length - 1, Math.max(0, index + d)); onSelect(cards[i].id); goTo(i); };
+  const step = (d: number) => { const i = Math.min(total - 1, Math.max(0, index + d)); onSelect(idAt(i)); goTo(i); };
 
   return (
     <div className="relative" style={{ "--slide": "min(78vw, 24rem)" } as React.CSSProperties}>
@@ -101,16 +109,37 @@ export function CardCarousel({ cards, selectedId, onSelect }: { cards: Card[]; s
             </div>
           );
         })}
+        {missing.map((a, k) => {
+          const art = /saving/i.test(a.displayName) ? ART.SAVINGS : ART.EVERYDAY;
+          const id = `${PENDING}${a.id}`;
+          const active = id === selectedId;
+          return (
+            <div role="listitem" key={id} className="w-[var(--slide)] shrink-0 snap-center">
+              <motion.button type="button" onClick={() => { onSelect(id); goTo(cards.length + k); }} aria-pressed={active}
+                aria-label={`${a.displayName}: no virtual card yet`}
+                animate={{ scale: active ? 1 : 0.9 }} transition={{ duration: reduce ? 0 : 0.25, ease: "easeOut" }}
+                className="block w-full rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                <Image src={art.src} alt={`${art.name} card preview`} width={art.width} height={art.height} sizes="(min-width: 640px) 384px, 78vw"
+                  className="block h-auto w-full opacity-40 grayscale-[30%]" />
+              </motion.button>
+              <div className={cn("mt-3 text-center transition-opacity duration-300", active ? "opacity-100" : "opacity-60")}>
+                <p className="text-sm font-medium">{a.displayName}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">No virtual card yet</p>
+                <Button type="button" size="sm" variant="outline" className="mt-2" onClick={() => onCreate?.(a.id)}>Create virtual card</Button>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {cards.length > 1 && (
+      {total > 1 && (
         <>
           <div className="pointer-events-none absolute inset-x-0 top-1/3 hidden -translate-y-1/2 justify-between px-2 sm:flex">
             <Button type="button" variant="outline" size="icon" className="pointer-events-auto rounded-full bg-background" onClick={() => step(-1)} disabled={index === 0} aria-label="Previous card"><ChevronLeft /></Button>
-            <Button type="button" variant="outline" size="icon" className="pointer-events-auto rounded-full bg-background" onClick={() => step(1)} disabled={index === cards.length - 1} aria-label="Next card"><ChevronRight /></Button>
+            <Button type="button" variant="outline" size="icon" className="pointer-events-auto rounded-full bg-background" onClick={() => step(1)} disabled={index === total - 1} aria-label="Next card"><ChevronRight /></Button>
           </div>
           <div className="flex justify-center gap-1.5" aria-hidden>
-            {cards.map((c, i) => <span key={c.id} className={cn("h-1.5 rounded-full bg-foreground transition-all duration-300", i === index ? "w-5" : "w-1.5 opacity-25")} />)}
+            {Array.from({ length: total }, (_, i) => <span key={idAt(i)} className={cn("h-1.5 rounded-full bg-foreground transition-all duration-300", i === index ? "w-5" : "w-1.5 opacity-25")} />)}
           </div>
         </>
       )}

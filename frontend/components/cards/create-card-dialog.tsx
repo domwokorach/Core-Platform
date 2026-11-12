@@ -22,7 +22,7 @@ const TYPES: { value: CardType; name: string; blurb: string }[] = [
   { value: "SAVINGS", name: "Savings card", blurb: "Pearl white finish" },
 ];
 
-export function CreateCardDialog({ open, onClose, accounts, onCreated }: { open: boolean; onClose: () => void; accounts: Account[]; onCreated: (card: Card) => void }) {
+export function CreateCardDialog({ open, onClose, accounts, onCreated, defaultAccountId }: { open: boolean; onClose: () => void; accounts: Account[]; onCreated: (card: Card) => void; defaultAccountId?: string }) {
   const mobile = useIsMobile();
   const issue = useIssueCard();
   const key = useRef<string | null>(null);
@@ -30,7 +30,7 @@ export function CreateCardDialog({ open, onClose, accounts, onCreated }: { open:
     resolver: zodResolver(createCardSchema), defaultValues: { accountId: "", cardType: "EVERYDAY", acknowledged: false },
   });
 
-  useEffect(() => { if (open) { key.current = null; reset({ accountId: accounts[0]?.id ?? "", cardType: "EVERYDAY", acknowledged: false }); } }, [open, accounts, reset]);
+  useEffect(() => { if (open) { key.current = null; reset({ accountId: accounts.find(a => a.id === defaultAccountId)?.id ?? accounts[0]?.id ?? "", cardType: "EVERYDAY", acknowledged: false }); } }, [open, accounts, defaultAccountId, reset]);
   // A new idempotency key is needed once the details change; retries of the same details reuse the key.
   useEffect(() => { const sub = watch(() => { key.current = null; }); return () => sub.unsubscribe(); }, [watch]);
 
