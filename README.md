@@ -1,5 +1,21 @@
 # FINIX — Core Banking Platform
 
+### Sign In — premium split-screen authentication
+
+The FINIX sign-in experience features a black brand hero, fictional card artwork and a clean authentication form.
+
+![FINIX split-screen sign-in page](docs/images/finix-sign-in.png)
+
+> Screenshots show local development/demo features. Card authorisations are simulated. No real financial transactions are represented.
+
+## FINIX Screenshots
+
+### Cards — spending limits and activity
+
+The Cards page includes sandbox card controls, daily and monthly spending limits, spending analytics and a card activity table.
+
+![FINIX Cards dashboard showing spending limits and card activity](docs/images/finix-cards.png)
+
 > **Purpose:** project overview, installation, architecture, API reference, testing and troubleshooting for developers.
 > **Related documents:** [Development Rules](RULE.md) · [Design System](DESIGN.md) · [Risk Register](RISK.md) · [Licensing](LICENSE.md) · [Copyright](COPYRIGHT.md) · [Security Policy](SECURITY.md)
 
@@ -13,21 +29,6 @@ FINIX is a **modular-monolith banking development sandbox**: customer accounts, 
 
 1. [Technology stack](#technology-stack) · 2. [Architecture](#architecture) · 3. [Project structure](#project-structure) · 4. [Installation requirements](#installation-requirements) · 5. [Run with Docker](#run-with-docker) · 6. [Local development](#local-development) · 7. [Environment variables](#environment-variables) · 8. [Authentication](#authentication) · 9. [API reference](#api-reference) · 10. [Banking functionality](#banking-functionality) · 11. [Testing](#testing) · 12. [Troubleshooting](#troubleshooting) · 13. [Project limitations](#project-limitations) · 14. [Documentation](#documentation)
 
-## FINIX Screenshots
-
-### Cards — spending limits and activity
-
-The Cards page includes sandbox card controls, daily and monthly spending limits, spending analytics and a card activity table.
-
-![FINIX Cards dashboard showing spending limits and card activity](docs/images/finix-cards.png)
-
-### Sign In — premium split-screen authentication
-
-The FINIX sign-in experience features a black brand hero, fictional card artwork and a clean authentication form.
-
-![FINIX split-screen sign-in page](docs/images/finix-sign-in.png)
-
-> Screenshots show local development/demo features. Card authorisations are simulated. No real financial transactions are represented.
 
 ## Technology stack
 
