@@ -9,6 +9,7 @@ import { ErrorState } from "@/components/banking/error-state";
 import { CardManager } from "@/components/cards/card-manager";
 import { CreateCardDialog } from "@/components/cards/create-card-dialog";
 import { VirtualCard } from "@/components/cards/virtual-card";
+import { CardDesignGallery } from "@/components/cards/card-design-gallery";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAccounts } from "@/hooks/use-banking";
@@ -58,6 +59,8 @@ export default function CardsPage() {
           {selected && <RevealItem key={selected.id}><CardManager card={selected} /></RevealItem>}
         </>
       )}
+
+      <CardDesignGallery />
 
       <CreateCardDialog open={creating} onClose={() => setCreating(false)} accounts={accounts} onCreated={c => setSelectedId(c.id)} />
     </RevealGroup>
