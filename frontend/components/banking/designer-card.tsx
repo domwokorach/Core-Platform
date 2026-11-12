@@ -81,7 +81,7 @@ export function DesignerCard({ design, cardholder = "A. MORGAN", last4 = "4821",
           <p className="truncate text-[13px] font-medium uppercase tracking-[0.08em]">{cardholder}</p>
           <p className={cn("text-[11px]", muted)}>{currency}</p>
         </div>
-        {VISA_BRANDING_APPROVED ? <VisaLogo tone={light ? "blue" : "white"} fallback={pill} /> : pill}
+        {VISA_BRANDING_APPROVED ? <VisaLogo tone={light ? "blue" : "white"} fallback={pill} className="h-7 sm:h-8" /> : pill}
       </div>
     </motion.div>
   );

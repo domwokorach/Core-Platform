@@ -40,5 +40,7 @@ services:
         NEXT_PUBLIC_APP_ORIGIN: http://localhost:3000
         # publishable Logo.dev key from .env (either name); empty = neutral icons only
         NEXT_PUBLIC_LOGO_DEV_TOKEN: ${NEXT_PUBLIC_LOGO_DEV_TOKEN:-${LOGO_DEV_TOKEN:-}}
+        # Visa mark on cards; default off. Set VISA_BRANDING_APPROVED=true in .env only if you are authorised to use it.
+        NEXT_PUBLIC_VISA_BRANDING_APPROVED: ${VISA_BRANDING_APPROVED:-false}
     depends_on: [backend]
     ports: ["127.0.0.1:3000:3000"]

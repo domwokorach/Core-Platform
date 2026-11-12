@@ -235,6 +235,7 @@ Root `.env` (created by `scripts/setup-env.sh`; secrets are random 256-bit value
 | `TWELVE_DATA_API_KEY`, `TWELVE_DATA_CREDITS_PER_MINUTE`, `MARKET_DATA_REALTIME_ENTITLED` | Optional market data (backend only) |
 | `ALPACA_API_KEY_ID`, `ALPACA_API_SECRET_KEY` | Optional Alpaca **paper** trading (backend only; the host is fixed to the paper endpoint in code) |
 | `LOGO_DEV_TOKEN` (or `NEXT_PUBLIC_LOGO_DEV_TOKEN`) | Logo.dev **publishable** key (`pk_…`), passed to the web image build |
+| `VISA_BRANDING_APPROVED` | `true` shows the Visa mark on cards in the Docker web image (default `false`). Set it only if you are authorised to use the mark; official assets go in `frontend/public/brand/` |
 
 `frontend/.env.local` (browser-public; **never put a secret in a `NEXT_PUBLIC_` variable**):
 

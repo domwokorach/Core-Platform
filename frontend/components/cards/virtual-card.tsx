@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { VISA_BRANDING_APPROVED, VisaLogo } from "@/components/banking/visa-logo";
 import { CARD_STATUS } from "./card-status";
 import type { Card } from "@/types/cards";
 
@@ -42,7 +43,11 @@ export function VirtualCard({ card, selected, onSelect, className }: { card: Car
           <p className="truncate text-sm font-medium">{card.cardholderName}</p>
           <p className="num mt-1 text-[13px] font-medium tracking-[0.14em]">{card.maskedReference}</p>
         </div>
-        <span className={cn("shrink-0 rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em]", light ? "text-neutral-600 ring-1 ring-neutral-900/20" : "text-white/70 ring-1 ring-white/25")}>Virtual · Sandbox</span>
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          {/* Network mark only when branding is explicitly approved (see VISA_BRANDING_APPROVED); this remains a sandbox card. */}
+          {VISA_BRANDING_APPROVED && <VisaLogo tone={light ? "blue" : "white"} />}
+          <span className={cn("shrink-0 rounded-md px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em]", light ? "text-neutral-600 ring-1 ring-neutral-900/20" : "text-white/70 ring-1 ring-white/25")}>Virtual · Sandbox</span>
+        </div>
       </div>
     </>
   );

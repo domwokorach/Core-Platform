@@ -120,7 +120,7 @@ All built on Radix/shadcn-style primitives in `frontend/components/ui`.
 | **Signature** | Smoked glass (`card-smoke`) | One silver sweep |
 
 * All designs are strictly monochrome, share the FINIX mark and wordmark, a silver EMV chip, a contactless symbol and the 1.586 : 1 card proportion.
-* **Payment-network mark:** the Visa logo is shown only when `NEXT_PUBLIC_VISA_BRANDING_APPROVED=true` and the official asset is in `public/brand/` (same gate as `AccountCard`). Otherwise a neutral "Demo card" pill is shown. Nothing on these cards implies a real programme or issuer.
+* **Payment-network mark:** the Visa logo is shown only when `NEXT_PUBLIC_VISA_BRANDING_APPROVED=true` (same gate as `AccountCard` and the sandbox card faces; Docker builds read `VISA_BRANDING_APPROVED`). The official SVGs go in `public/brand/`; until they exist the component falls back to a third-party (Logo.dev) rendering of visa.com, which is **not** Visa-supplied artwork. With the flag off, a neutral "Demo card" pill is shown. The mark is for design demonstration; real use needs authorisation from Visa or an issuer.
 * Motion: 450 ms entrance, subtle pointer tilt (max ±5°, mouse only). Tilt and entrance are disabled for `prefers-reduced-motion`.
 * Accessibility: each card is a labelled group (`Everyday card design, GBP, number ending 4821`) and is not focusable.
 * Tests: `frontend/tests/designer-cards.spec.ts`.

@@ -1,6 +1,7 @@
 "use client";
 
 import { CARD_DESIGNS, DesignerCard, type CardDesign } from "@/components/banking/designer-card";
+import { VISA_BRANDING_APPROVED } from "@/components/banking/visa-logo";
 
 const ORDER: CardDesign[] = ["everyday", "savings", "metal", "signature"];
 
@@ -10,7 +11,8 @@ export function CardDesignGallery() {
     <section aria-labelledby="card-designs-title" className="mt-10">
       <h2 id="card-designs-title" className="text-lg font-semibold tracking-tight">Card designs</h2>
       <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-        The FINIX design collection. These are decorative concepts with fictional details: they are not issued cards, carry no balances and imply no payment-network affiliation.
+        The FINIX design collection. These are decorative concepts with fictional details: they are not issued cards and carry no balances.
+        {VISA_BRANDING_APPROVED ? " The Visa mark is shown for design demonstration only." : " They imply no payment-network affiliation."}
       </p>
       <ul className="mt-5 grid gap-6 sm:grid-cols-2" aria-label="FINIX card designs">
         {ORDER.map(design => (
