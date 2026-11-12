@@ -8,7 +8,8 @@ import { EmptyState } from "@/components/banking/empty-state";
 import { ErrorState } from "@/components/banking/error-state";
 import { CardManager } from "@/components/cards/card-manager";
 import { CreateCardDialog } from "@/components/cards/create-card-dialog";
-import { VirtualCard } from "@/components/cards/virtual-card";
+import { CardCarousel } from "@/components/cards/card-carousel";
+import { CardTypeTabs } from "@/components/cards/card-type-tabs";
 import { CardDesignGallery } from "@/components/cards/card-design-gallery";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,14 +48,8 @@ export default function CardsPage() {
       ) : (
         <>
           <RevealItem>
-            {/* Swipeable carousel on phones, grid from tablet up. Scrolling is contained here, so the page never scrolls sideways. */}
-            <div role="list" aria-label="Your virtual cards" className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-3 pt-1 scrollbar-none sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-0 xl:grid-cols-3">
-              {cards.map(c => (
-                <div role="listitem" key={c.id} className="w-[min(85%,22rem)] shrink-0 snap-center sm:w-auto sm:shrink">
-                  <VirtualCard card={c} selected={c.id === selected?.id} onSelect={() => setSelectedId(c.id)} />
-                </div>
-              ))}
-            </div>
+            <CardTypeTabs cards={cards} selected={selected} onSelect={setSelectedId} />
+            <CardCarousel cards={cards} selectedId={selected?.id} onSelect={setSelectedId} />
           </RevealItem>
           {selected && <RevealItem key={selected.id}><CardManager card={selected} /></RevealItem>}
         </>
